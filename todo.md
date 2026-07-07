@@ -1,4 +1,4 @@
-# Industrial Safety Intelligence Platform — Task Tracker
+# SHELDRA — Industrial Safety Intelligence Platform Task Tracker
 
 > Legend: `[ ]` Pending · `[~]` In Progress · `[x]` Done
 > Priority: 🔴 P0 · 🟡 P1 · 🟢 P2 · ⚪ P3
@@ -7,209 +7,285 @@
 
 ## Phase 0: Foundation (Pre-Hackathon)
 
+### SHELDRA Identity & Design (All)
+- [ ] 🔴 Name/backstory: "Safety Holographic Enhanced Learning & Decision-Reality Assistant"
+- [ ] 🔴 SHELDRA visual identity: color palette, avatar style (futuristic but trustworthy)
+- [ ] 🟡 SHELDRA voice profile: tone (calm, authoritative, encouraging)
+- [ ] 🟡 SHELDRA personality guardrails: never alarm, always explain, redirect not reprimand
+
 ### Infrastructure (B)
 - [ ] 🔴 Create GitHub monorepo with branch protection
 - [ ] 🔴 Set up AWS/GCP accounts, IAM roles, and credit limits
 - [ ] 🔴 Write `docker-compose.yml` for local services (Kafka, Neo4j, Qdrant, Redis, MinIO)
 - [ ] 🟡 Configure GitHub Actions CI (lint, typecheck, build)
-- [ ] 🟡 Set up Terraform or Pulumi for cloud infra-as-code
 - [ ] 🟢 Create `.env.example` with all config templates
 
 ### AI/ML Setup (A)
-- [ ] 🔴 Download YOLOv8n/v8s pretrained weights (PPE + person detection)
-- [ ] 🔴 Download TimesNet / PatchTST pretrained checkpoint
-- [ ] 🔴 Set up synthetic data generator: COCO-style PPE images (blender or augmentation)
+- [ ] 🔴 Research SHELDRA LLM baseline (Llama 3 8B, fine-tuning scope)
+- [ ] 🔴 Set up worker profile schema (experience, learning_speed, language, certs, incident_history, interaction_history)
+- [ ] 🔴 Set up synthetic worker profiles (3 levels: novice, experienced, expert)
 - [ ] 🟡 Set up ONNX runtime for edge-optimized inference
-- [ ] 🟡 Create model registry structure (MLflow or local)
+- [ ] 🟡 Set up Whisper (STT) + ElevenLabs / Coqui (TTS) integration stubs
+- [ ] 🟢 Collect/draft 5 safety procedure PDFs for SHELDRA's knowledge base
 
 ### Frontend Setup (C)
 - [ ] 🔴 Scaffold Next.js 14 with App Router + TypeScript
-- [ ] 🔴 Set up Three.js with React Three Fiber
-- [ ] 🔴 Configure Tailwind CSS + shadcn/ui component library
-- [ ] 🟡 Set up WebSocket client library (Socket.io or native WS)
-- [ ] 🟢 Create basic layout shell (sidebar, topbar, main content)
+- [ ] 🔴 Set up Three.js with React Three Fiber (R3F) for avatar rendering
+- [ ] 🔴 Set up WebXR / A-Frame for VR scene (stretch)
+- [ ] 🔴 Configure Tailwind CSS + shadcn/ui
+- [ ] 🔴 Set up WebSocket client (Socket.io or native WS)
+- [ ] 🟡 Set up react-speech-kit / Web Speech API for voice I/O
+- [ ] 🟢 Create dashboard layout shell (SHELDRA main view, DT panel, sidebar)
 
 ### API Contracts (B + C)
-- [ ] 🔴 Define OpenAPI 3.0 spec for all endpoints
-- [ ] 🔴 Set up FastAPI application skeleton with routers
-- [ ] 🟡 Generate TypeScript client from OpenAPI spec
-- [ ] 🟡 Set up Pydantic models matching database schema
+- [ ] 🔴 Design SHELDRA API: `POST /api/v1/sheldra/chat` (context → response)
+- [ ] 🔴 Design Decision Tree API: `GET /api/v1/decision-trees/{hazard_id}`
+- [ ] 🔴 Design Worker Profile API: `GET/PUT /api/v1/workers/{id}`
+- [ ] 🟡 Design Real-time update API: `WS /ws/sheldra/stream`
+- [ ] 🟡 Set up FastAPI application skeleton with routers
+
+### Knowledge Graph Schema (B)
+- [ ] 🔴 Define `Worker` node (with profile properties)
+- [ ] 🔴 Define `Hazard` node + `DecisionTree` node + `TreeNode` node
+- [ ] 🔴 Define `SHELDRASession` node (interaction log)
+- [ ] 🟡 Define edges: `HAS_PROFILE`, `EXPERIENCED`, `GUIDED_BY`, `RESOLVED_VIA`
 
 ---
 
-## Phase 1: Core MVP — The Differentiator (Day 1)
+## Phase 1: SHELDRA + Decision Tree Core (Day 1)
 
-### Multi-Agent System (A + B)
+### SHELDRA Core AI (A)
+
+#### LLM & Prompt Pipeline
+- [ ] 🔴 Design SHELDRA system prompt: persona + guardrails + context injection template
+- [ ] 🔴 Implement context assembly: Worker Profile + Current Observations + History + Hazard Context
+- [ ] 🔴 Implement SHELDRA response pipeline: Context → Profile Augmentation → RAG Retrieval → Prompt Assembly → LLM → Response Parsing
+- [ ] 🟡 Implement streaming response (SSE or WebSocket) for real-time chat feel
+- [ ] 🟡 Implement "SHELDRA thinking" animation while generating (processing indicator)
+
+#### Personalization Engine
+- [ ] 🔴 Build profile → prompt augmentation: novice gets step-by-step, expert gets confirmation
+- [ ] 🔴 Implement learning speed adaptation: detect if worker hesitates → simplify instructions
+- [ ] 🟡 Implement language detection + response in worker's preferred language
+- [ ] 🟡 Implement experience-aware feedback: adjust detail level based on certs + incident history
+- [ ] 🟢 Implement personalization test: same hazard, 3 profiles → 3 different SHELDRA responses
+
+#### Corrective Feedback
+- [ ] 🔴 Implement feedback trigger from Vision Agent observations (e.g., "missing helmet")
+- [ ] 🔴 Implement feedback templates: observation → impact → correction → confirmation
+- [ ] 🟡 Implement graded feedback: gentle reminder → firm warning → escalate
+- [ ] 🟢 Implement positive reinforcement: "Great job wearing your harness correctly!"
+
+#### Emotional Awareness
+- [ ] 🟡 Implement voice stress analysis (prosody features from STT)
+- [ ] 🟡 Implement fatigue detection (response time, interaction patterns)
+- [ ] 🟡 Adapt SHELDRA tone based on emotional state: stressed → calming, confused → clarifying
+- [ ] 🟢 Log emotional state → worker profile for shift handover
+
+### SHELDRA Holographic Avatar (C)
+
+#### 3D Avatar
+- [ ] 🔴 Implement R3F avatar scene with lighting + environment
+- [ ] 🔴 Implement SHELDRA character model (Ready Player Me or custom geometric)
+- [ ] 🔴 Implement idle animation loop (gentle floating/scanning)
+- [ ] 🟡 Implement gesture system: pointing, nodding, warning stance, hands-free
+- [ ] 🟡 Implement transition animations (appear, disappear, resize)
+- [ ] 🟢 Implement responsive avatar size (full desktop, small mobile)
+
+#### Lip-Sync & Voice
+- [ ] 🔴 Integrate TTS service (ElevenLabs API or Coqui TTS local)
+- [ ] 🔴 Implement lip-sync from audio waveform (viseme mapping or amplitude-based)
+- [ ] 🟡 Implement voice activity indicator (subtle glow pulse)
+- [ ] 🟢 Implement text captions below avatar (accessibility + noisy environment fallback)
+
+#### UI Overlay
+- [ ] 🔴 Implement SHELDRA speech bubble with streaming text
+- [ ] 🔴 Implement context panel (current worker info, current hazard, environment status)
+- [ ] 🟡 Implement SHELDRA "sight" visualization (what SHELDRA is currently observing)
+- [ ] 🟡 Implement mini-map showing SHELDRA's position relative to factory floor
+- [ ] 🟢 Implement "Ask SHELDRA" input box (text fallback for voice)
+
+### Decision Tree Engine (B)
+
+#### Data Model & Generation
+- [ ] 🔴 Design JSON schema: `{ tree_id, hazard_type, version, nodes: [{ id, question, conditions, branches, action, accuracy }], edges, root_id }`
+- [ ] 🔴 Implement tree generator: hazard type → query KG for related rules → build node graph
+- [ ] 🔴 Implement tree serializer → API response
+- [ ] 🟡 Implement tree versioning (v1, v2, v3 with accuracy deltas tracked)
+- [ ] 🟢 Seed 3 pre-built trees for demo (gas leak, PPE violation, equipment anomaly)
+
+#### 5-Minute Update Cycle
+- [ ] 🔴 Implement incremental update daemon (cron / background worker every 300s)
+- [ ] 🔴 Implement accuracy scorer: compare predicted hazard resolution → actual outcome
+- [ ] 🔴 Implement branch pruning: remove branches with < 50% accuracy over last 10 evaluations
+- [ ] 🟡 Implement new branch generation: detect patterns in incorrect resolutions → propose new branches
+- [ ] 🟡 Implement A/B testing: serve old tree vs new tree to different workers
+- [ ] 🟢 Implement update notification: "Decision Tree #7 updated — new branch added for gas leak escalation"
+
+#### API
+- [ ] 🔴 `GET /api/v1/decision-trees` — list all available trees
+- [ ] 🔴 `GET /api/v1/decision-trees/{hazard_id}` — current tree for hazard
+- [ ] 🔴 `GET /api/v1/decision-trees/{id}/history` — version history + accuracy deltas
+- [ ] 🟡 `POST /api/v1/decision-trees/evaluate` — score a resolution path from SHELDRA interaction
+- [ ] 🟢 `GET /api/v1/decision-trees/accuracy-dashboard` — aggregate accuracy metrics
+
+### Decision Tree Visualization (C)
+
+#### Flow Chart Renderer
+- [ ] 🔴 Implement interactive DAG using React Flow
+- [ ] 🔴 Implement color-coded nodes: safe (green), caution (yellow), hazard (red), resolved (blue)
+- [ ] 🔴 Implement step-by-step walkthrough mode (highlight current node, animate path)
+- [ ] 🟡 Implement click-to-expand nodes (show details, conditions, past resolutions)
+- [ ] 🟡 Implement zoom + pan controls
+- [ ] 🟢 Implement "Decision Tree updated" badge when new version available
+
+#### Hazard Resolution Flow
+- [ ] 🔴 Build demo overlay: SHELDRA guides → Decision Tree shows current position in tree
+- [ ] 🟡 Implement tree comparison view: old tree vs new tree side-by-side
+- [ ] 🟢 Implement export to PNG/PDF for compliance documentation
+
+---
+
+## Phase 2: Integration + Supporting Intelligence (Day 2)
+
+### Multi-Agent System → Feeds SHELDRA (A + B)
 
 #### Agent Framework (B)
-- [x] 🔴 [DONE - DESIGN] Define Agent base class with lifecycle (init → observe → reason → act → report)
-- [x] 🔴 [DONE - DESIGN] Define message protocol: `{agent_id, target_id, message_type, payload, timestamp, trace_id}`
-- [ ] 🔴 Implement Orchestrator Agent with state machine
-- [ ] 🔴 Implement agent registry (agents register with capabilities)
-- [ ] 🔴 Implement inter-agent communication via Redis Pub/Sub
-- [ ] 🟡 Implement shared context store (Redis) for cross-agent state
-- [ ] 🟡 Implement trace logging for every agent decision
-- [ ] 🟢 Build agent health-check endpoint
+- [ ] 🟡 Implement Agent base class + message protocol
+- [ ] 🟡 Orchestrator Agent: routes all observations → SHELDRA context assembly
+- [ ] 🟡 Implement agent-to-SHELDRA bridge (agent messages → SHELDRA awareness state)
+- [ ] 🟢 Implement shared context store (Redis) for SHELDRA's world model
 
-#### Vision Agent (A)
-- [ ] 🔴 Implement frame ingestion from simulated RTSP stream
-- [ ] 🔴 Implement YOLOv8 inference pipeline (PPE: helmet, vest, gloves, goggles)
-- [ ] 🔴 Implement zone encroachment logic (polygon-based ROI)
-- [ ] 🟡 Implement unsafe behavior detection (pose keypoints → rule engine)
-- [ ] 🟡 Convert detection events → agent messages
-- [ ] 🟡 Implement confidence threshold filtering
-- [ ] 🟢 Person tracking across frames (simple IoU tracking)
+#### Vision Agent → SHELDRA Corrective Feedback (A)
+- [ ] 🟡 PPE detection (YOLOv8) → SHELDRA: "Your safety glasses are on top of your helmet"
+- [ ] 🟡 Zone encroachment → SHELDRA: "Please step back, this area requires confined space certification"
+- [ ] 🟡 Unsafe behavior (pose) → SHELDRA: "Bend your knees, not your back, when lifting"
+- [ ] 🟢 Frame capture → SHELDRA context (what SHELDRA "sees")
 
-#### Monitoring Agent (A)
-- [ ] 🔴 Implement TimesNet inference for anomaly scoring
-- [ ] 🔴 Implement sliding window (60s) on streaming sensor data
-- [ ] 🟡 Implement multi-sensor correlation anomaly
-- [ ] 🟡 Implement adaptive thresholding (moving baseline)
-- [ ] 🟡 Convert anomaly scores → agent messages with severity
+#### Monitoring Agent → Decision Tree Input (A)
+- [ ] 🟡 TimesNet anomaly detection → Decision Tree trigger
+- [ ] 🟡 Multi-sensor correlation → compound hazard detection → tree selection
+- [ ] 🟢 Anomaly severity scoring → tree path weighting
 
 #### Compliance Agent (B)
-- [ ] 🔴 Implement Cypher query builder for safety rules
-- [ ] 🔴 Implement rule-matching engine (current graph state vs. violation patterns)
-- [ ] 🟡 Implement regulatory reference lookup via RAG
-- [ ] 🟡 Implement severity scoring based on violation type + history
+- [ ] 🟡 KG query: relevant safety rules for current context → SHELDRA guidance
+- [ ] 🟡 Regulatory reference → Decision Tree branch condition
 
-#### Response Agent (B)
-- [ ] 🔴 Implement action template system (evacuate, alert, shutdown, log)
-- [ ] 🔴 Implement action execution with confirmation step
-- [ ] 🟡 Implement escalation logic (if no supervisor response in T seconds)
-- [ ] 🟢 Integrate with Twilio/email for external alerts
+#### RAG Agent (A + B)
+- [ ] 🟡 Embed safety procedure PDFs (E5-mistral-7b)
+- [ ] 🟡 RAG retrieval → SHELDRA response grounding (citation-anchored)
+- [ ] 🟡 "SHELDRA, show me the regulation" → citation display
 
 #### Explanation Agent (A)
-- [ ] 🔴 Implement decision trace collector (gathers reasoning from all agents)
-- [ ] 🔴 Implement natural language explanation generator
-- [ ] 🟡 Implement confidence provenance (model scores + context relevance)
-- [ ] 🟡 Implement counterfactual explanation (what would change this decision?)
+- [ ] 🟡 SHELDRA decision trace: "Why did you suggest evacuation?"
+- [ ] 🟡 Collect evidence chain: observation → rule → recommendation
+- [ ] 🟢 Display trace in SHELDRA UI panel
 
-### Computer Vision Pipeline (A)
-- [ ] 🔴 Set up video frame extractor at configurable FPS
-- [ ] 🔴 Implement PPE class detection with bounding box overlay
-- [ ] 🔴 Implement worker-camera calibration (mapping 2D detections → 3D zones)
-- [ ] 🟡 Implement queue-based frame processing (avoid backpressure)
-- [ ] 🟢 Implement alert-on-missing-PPE logic
-- [ ] 🟢 Implement dashboard bounding box streaming
+### Knowledge Graph → Personalization (B)
+- [ ] 🟡 Worker profile: experience, certs, learning_speed, incident_history, language
+- [ ] 🟡 SHELDRA interaction history: every coaching moment → `(Worker)-[:GUIDED_BY]->(SHELDRA)-[:ABOUT]->(Hazard)`
+- [ ] 🟡 Hazard taxonomy: types, severity, frequency, related trees
+- [ ] 🟢 Temporal query: "What has this worker learned in the last shift?"
 
-### Knowledge Graph (B)
-- [ ] 🔴 Define Neo4j node labels: `Worker`, `Zone`, `Equipment`, `Incident`, `SafetyRule`, `Procedure`, `Sensor`
-- [ ] 🔴 Define Neo4j edge types: `OPERATES_IN`, `ASSIGNED_TO`, `LOCATED_IN`, `TRIGGERED_BY`, `VIOLATES`, `MITIGATES`, `MONITORED_BY`
-- [ ] 🔴 Seed graph with synthetic factory data (20 workers, 5 zones, 10 machines)
-- [ ] 🔴 Implement `createIncident` mutation (event → graph node + edges)
-- [ ] 🟡 Implement graph query API for Compliance Agent
-- [ ] 🟡 Implement temporal graph queries (what changed in last hour?)
-- [ ] 🟢 Implement GraphQL wrapper over Neo4j (optional)
-
-### Real-Time Ingestion (B)
-- [ ] 🔴 Configure Kafka topics: `sensor.readings`, `vision.events`, `agent.messages`, `system.alerts`
-- [ ] 🔴 Implement IoT sensor simulator (Python: temp, vibration, gas, noise, humidity)
-- [ ] 🔴 Implement Kafka producer for simulated data
-- [ ] 🟡 Implement Kafka consumer → agent event bridge
-- [ ] 🟡 Implement schema registry with Avro/Protobuf
-- [ ] 🟢 Implement Flink/KSQL for windowed aggregates (5min avg, min, max)
-
----
-
-## Phase 2: Intelligence Layer (Day 2)
-
-### RAG Pipeline (B + A)
-- [ ] 🟡 Collect 3-5 safety procedure PDFs (OSHA-style synthetic)
-- [ ] 🟡 Implement PDF chunking with overlap (LangChain or custom)
-- [ ] 🟡 Implement embedding pipeline with E5-mistral-7b or BGE-large
-- [ ] 🟡 Set up Qdrant with hybrid search (dense + sparse BM25)
-- [ ] 🟡 Connect RAG query to Compliance Agent
-- [ ] 🟢 Implement citation-grounded response formatting
-- [ ] 🟢 Implement "I don't know" fallback for low-confidence queries
-
-### Time-Series Anomaly (A)
-- [ ] 🟡 Train/calibrate TimesNet on synthetic normal data
-- [ ] 🟡 Implement real-time inference server (Triton or custom FastAPI)
-- [ ] 🟡 Implement anomaly alert suppression (debounce to avoid alert storms)
-- [ ] 🟡 Implement root-cause correlation (which sensor is most anomalous?)
-- [ ] 🟢 Implement time-series dashboard charts (line + anomaly highlights)
+### VR Training Integration (C + A)
+- [ ] 🟡 SHELDRA avatar rendered in A-Frame / Three.js XR scene
+- [ ] 🟡 Hazard simulation: visual + audio cues for gas leak, fire, equipment failure
+- [ ] 🟡 SHELDRA guides worker through VR hazard scenario
+- [ ] 🟡 Worker response scoring: reaction time, decision accuracy, procedure adherence
+- [ ] 🟢 VR performance data → worker profile update
+- [ ] 🟢 VR scene switching: normal operation → hazard → resolution
 
 ### Digital Twin (C)
-- [ ] 🟡 Create 3D factory layout (floor, walls, equipment placeholders)
-- [ ] 🟡 Implement real-time state sync via WebSocket (equipment on/off, worker positions)
-- [ ] 🟡 Implement equipment status overlays (color-coded: normal/warning/critical)
-- [ ] 🟡 Implement incident heatmap overlay (zones colored by risk score)
-- [ ] 🟢 Implement camera frustum visualization (which camera covers which zone)
-- [ ] 🟢 Implement zoom-to-incident animation on alert
-- [ ] 🟢 Mobile-responsive 3D view (orbit controls)
+- [ ] 🟢 Basic 3D factory layout
+- [ ] 🟢 SHELDRA position indicator in Digital Twin (floating avatar marker)
+- [ ] 🟢 Hazard highlight overlay (pulsing red for active hazard)
+- [ ] 🟢 Camera feed thumbnail integration (what SHELDRA "sees")
 
 ---
 
-## Phase 3: Integration & Polish (Day 3)
+## Phase 3: Polish + Accuracy Loop (Day 3)
 
-### Human-in-the-Loop (C)
-- [ ] 🟢 Implement alert queue with priority sorting
-- [ ] 🟢 Implement acknowledge / dismiss / escalate buttons
-- [ ] 🟢 Implement supervisor override mechanism (override AI decision)
-- [ ] 🟢 Implement audit trail for all HITL actions
-- [ ] 🟢 Implement shift handover summary
-- [ ] ⚪ Implement supervisor note attachment
+### SHELDRA Refinement (A + C)
 
-### Explainable AI (A + C)
-- [ ] 🟢 Implement SHAP summary for vision model decisions
-- [ ] 🟢 Implement agent decision trace visualizer (timeline of agent reasoning)
-- [ ] 🟢 Implement confidence gauge per prediction
-- [ ] 🟢 Implement "Why this alert?" panel (natural language + evidence)
-- [ ] ⚪ Implement counterfactual explorer ("what if worker wore helmet?")
+#### Emotion & Personality
+- [ ] 🟢 Tone modulation: coaching mode (calm), warning mode (urgent), praise mode (warm)
+- [ ] 🟢 Stress detection: adapt speech rate + simplicity based on worker stress
+- [ ] 🟢 SHELDRA "memory": recalls past interactions with specific worker
+- [ ] ⚪ Joke/icebreaker capability for high-stress de-escalation
 
-### Emergency Response Workflow (B + C)
-- [ ] 🔴 Implement automated response triggers (pre-built action plans)
-- [ ] 🟡 Implement escalation ladder: worker → supervisor → manager → director
-- [ ] 🟡 Implement multi-channel alerting: WebSocket push → email (SendGrid) → SMS (Twilio)
-- [ ] 🟡 Implement post-incident report generator (PDF with timeline + evidence)
-- [ ] 🟢 Implement incident playback (replay timeline of events)
+#### Multi-Language (A)
+- [ ] 🟢 SHELDRA in top 3 languages (English, Spanish, Mandarin)
+- [ ] 🟢 Detect worker language from profile → switch automatically
+- [ ] ⚪ Real-time translation for multilingual teams
 
-### Dashboard Completion (C)
-- [ ] 🔴 Implement real-time safety score (0-100) with trend line
-- [ ] 🔴 Implement agent activity feed (streaming log of agent actions)
-- [ ] 🟡 Implement Knowledge Graph explorer (force-directed graph visualization)
-- [ ] 🟡 Implement incident timeline (chronological + filterable)
-- [ ] 🟡 Implement worker shift view (who is where, PPE compliance %)
-- [ ] 🟢 Implement dark mode toggle
-- [ ] 🟢 Implement responsive layout (mobile PWA)
+#### Avatar Polish (C)
+- [ ] 🟢 SHELDRA holographic shader effects (scan lines, glow, translucency)
+- [ ] 🟢 Gesture-to-speech synchronization
+- [ ] 🟢 Environmental responsiveness (avatar lighting matches scene)
+- [ ] ⚪ AR wireframe overlays (HoloLens-style HUD concept)
+
+### Decision Tree Accuracy Engine (B + A)
+
+#### Metrics & Dashboard (B)
+- [ ] 🟢 Accuracy dashboard: precision, recall, F1 per tree
+- [ ] 🟢 Resolution success rate: how many hazards resolved correctly vs escalated
+- [ ] 🟢 Update frequency tracking: how many trees updated in last 24h
+- [ ] 🟢 Branch effectiveness ranking
+
+#### Automated Improvement (A + B)
+- [ ] 🟢 Tree pruning: remove <50% accuracy branches after 10 evaluations
+- [ ] 🟢 New branch generation: analyze incorrect resolutions → propose new conditions
+- [ ] 🟢 A/B test results visualization
+- [ ] ⚪ Reinforcement learning from SHELDRA interaction outcomes
+
+### Human-in-the-Loop (B + C)
+- [ ] 🟢 Supervisor dashboard: monitor all SHELDRA interactions
+- [ ] 🟢 Override SHELDRA recommendation (with reason logged)
+- [ ] 🟢 SHELDRA audit log: searchable, filterable
+- [ ] 🟢 Shift handover: SHELDRA generates shift summary
+- [ ] ⚪ Supervisor note attachment to worker profile
+
+### Real-Time Update Pipeline (B)
+- [ ] 🔴 Kafka topics: `sheldra.interactions`, `decision.trees`, `worker.profiles`, `system.alerts`
+- [ ] 🔴 5-minute Decision Tree refresh (Airflow DAG or cron)
+- [ ] 🟡 Worker profile real-time sync (interaction → graph update → profile refresh)
+- [ ] 🟡 Accuracy evaluation pipeline: hazard resolution → score → tree feedback
+- [ ] 🟢 Schema registry for all topics
+
+### Demo Dashboard (C)
+- [ ] 🔴 Main view: SHELDRA avatar + conversation panel + context sidebar
+- [ ] 🔴 Decision Tree panel side-by-side with SHELDRA (see coaching + tree simultaneously)
+- [ ] 🔴 Worker profile selector (switch between novice/expert to show personalization)
+- [ ] 🟡 "SHELDRA's View" panel (what SHELDRA is currently observing)
+- [ ] 🟡 Accuracy real-time ticker (tree updated, accuracy improved)
+- [ ] 🟢 Dark mode (control room optimized)
+- [ ] 🟢 Mobile-responsive
 
 ### Deployment (B)
-- [ ] 🟡 Write Dockerfiles for all services (optimized multi-stage)
-- [ ] 🟡 Write `docker-compose.prod.yml` with resource limits
-- [ ] 🟡 Deploy to AWS ECS Fargate or GCP Cloud Run
-- [ ] 🟡 Set up CloudFront / CDN for frontend assets
-- [ ] 🟡 Set up domain + SSL (Let's Encrypt or Cloudflare)
-- [ ] 🟡 Configure logging (CloudWatch / GCP Logging)
-- [ ] 🟢 Load test with k6 (1000 events/sec sustained)
-- [ ] 🟢 Set up auto-scaling policies
+- [ ] 🟡 Dockerfiles for all services
+- [ ] 🟡 Deploy SHELDRA API + avatar to cloud
+- [ ] 🟡 WebSocket for real-time SHELDRA streaming
+- [ ] 🟡 SSL + domain
+- [ ] 🟢 k6 load test: 100 concurrent SHELDRA sessions
 
 ---
 
 ## Phase 4: Presentation Prep (Last 4h)
 
-### Demo Flow (All)
-- [ ] 🔴 Script 5-min demo walkthrough (problem → solution → live demo → impact)
-- [ ] 🔴 Rehearse demo 3x with timer
-- [ ] 🔴 Record backup demo video (in case live fails)
-- [ ] 🟡 Prepare "easter eggs" for judge questions (hard-coded impressive scenarios)
-- [ ] 🟡 Prepare disaster recovery: offline demo mode without cloud
+### Demo Script (All)
+- [ ] 🔴 "Meet SHELDRA" — 30s intro (problem → SHELDRA appears)
+- [ ] 🔴 Scenario 1: PPE violation → SHELDRA corrective feedback → Decision Tree generates flow
+- [ ] 🔴 Scenario 2: Gas leak → Decision Tree updates within 5 min → SHELDRA guides evacuation
+- [ ] 🔴 Scenario 3: Personalization — switch worker profiles, same hazard, different SHELDRA response
+- [ ] 🟡 "Behind the scenes" — Decision Tree accuracy metrics, 5-min update cycle visualization
+- [ ] 🟡 Record backup demo video
 
 ### Slides (C)
-- [ ] 🟡 Finalize slide deck (10 slides max)
-- [ ] 🟡 Include architecture diagram
-- [ ] 🟡 Include live demo screenshots as fallback
-- [ ] 🟡 Prepare Q&A cheat sheet for each team member
-
----
-
-## Quick Reference: Daily Standup Questions
-
-Each morning, answer:
-1. What did I complete yesterday?
-2. What am I working on today?
-3. What blockers do I have?
-4. What integration points need coordination?
+- [ ] 🟡 10-slide deck: SHELDRA-first narrative
+- [ ] 🟡 Architecture slide: SHELDRA at center, everything feeds her
+- [ ] 🟡 Personalization comparison slide (3 worker profiles, 3 responses)
+- [ ] 🟡 Decision Tree evolution slide (tree v1 vs v3, accuracy improvement)
+- [ ] 🟡 Q&A cheat sheet per team member
 
 ---
 
@@ -217,14 +293,22 @@ Each morning, answer:
 
 ```
 /
-├── frontend/          # Next.js dashboard + Digital Twin (C)
+├── frontend/
+│   ├── components/sheldra/     # Avatar, speech bubble, gestures (C)
+│   ├── components/decision-tree/ # Flow chart viz, walkthrough (C)
+│   ├── components/dashboard/   # Layout, panels, context (C)
+│   ├── scenes/                 # VR training scenes (C)
+│   └── pages/                  # Next.js routes (C)
 ├── backend/
-│   ├── agents/        # Multi-agent system (A + B)
-│   ├── ingestion/     # Kafka producers, consumers (B)
-│   ├── models/        # CV, Time-series inference (A)
-│   ├── knowledge-graph/ # Neo4j schema + queries (B)
-│   └── rag/           # Document ingestion + retrieval (B)
-├── infra/             # Docker, Terraform, CI/CD (B)
-├── data/              # Synthetic data, sample docs
-└── docs/              # Architecture, API specs
+│   ├── sheldra/                # Core AI, personalization engine, voice I/O (A)
+│   ├── decision-tree/          # Tree generator, update cycle, scorer (B)
+│   ├── agents/                 # Multi-agent system (A + B)
+│   ├── knowledge-graph/        # Worker profiles, hazard taxonomy (B)
+│   └── rag/                    # Safety document retrieval (A + B)
+├── infra/                      # Docker, CI/CD (B)
+├── data/
+│   ├── worker-profiles/        # 3 synthetic profiles (All)
+│   ├── safety-docs/            # Procedure PDFs (All)
+│   └── hazard-scenarios/       # Demo scenario definitions (All)
+└── docs/                       # Architecture, API specs
 ```
