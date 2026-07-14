@@ -9,7 +9,7 @@
 
 ## Phase 0 — Foundation
 
-### P0-INF Infrastructure
+### P0-INF Infrastructure - `[x]`
 
 | # | Task | Pri | Owner | Time | Deps | Acceptance Criteria |
 |---|------|-----|-------|------|------|-------------------|
@@ -20,7 +20,7 @@
 | 5 | Set up Docker network + volume persistence | P1 | B | 30m | #3 | Data survives container restart |
 | 6 | Create .env.example with all configuration templates | P1 | B | 30m | — | All secrets documented, none committed |
 
-### P0-BAC Backend
+### P0-BAC Backend - `[x]`
 
 | # | Task | Pri | Owner | Time | Deps | Acceptance Criteria |
 |---|------|-----|-------|------|------|-------------------|
@@ -32,7 +32,7 @@
 | 12 | Kafka topic setup script (sheldra.interactions, decision.trees, sensor.readings, vision.detections, worker.profiles, system.alerts) | P1 | B | 1h | #11 | All topics created with schema registry |
 | 13 | OpenAPI 3.0 specification (single endpoint: /api/v1/sheldra/chat) | P0 | B+C | 1.5h | — | Spec validated; TypeScript client generated |
 
-### P0-FE Frontend
+### P0-FE Frontend - `[x]`
 
 | # | Task | Pri | Owner | Time | Deps | Acceptance Criteria |
 |---|------|-----|-------|------|------|-------------------|
