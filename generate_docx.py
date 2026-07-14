@@ -1,1229 +1,1431 @@
 #!/usr/bin/env python3
-"""Generate SHELDRA architecture proposal as a Word document."""
+"""Generate SHELDRA enterprise architecture document."""
 
 from docx import Document
-from docx.shared import Inches, Pt, RGBColor
+from docx.shared import Inches, Pt, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.oxml.ns import qn
 import datetime
 
 doc = Document()
 
 # ── Global Styles ──────────────────────────────────────────────────────────
 style = doc.styles['Normal']
-font = style.font
-font.name = 'Calibri'
-font.size = Pt(11)
-style.paragraph_format.space_after = Pt(6)
+style.font.name = 'Calibri'
+style.font.size = Pt(10.5)
+style.paragraph_format.space_after = Pt(4)
+style.paragraph_format.line_spacing = 1.15
+
+code_style = doc.styles.add_style('CodeBlock', 1)  # paragraph
+code_style.font.name = 'Consolas'
+code_style.font.size = Pt(8.5)
+code_style.paragraph_format.space_before = Pt(6)
+code_style.paragraph_format.space_after = Pt(6)
 
 for level in range(1, 4):
     h = doc.styles[f'Heading {level}']
     h.font.color.rgb = RGBColor(0x1A, 0x3C, 0x6E)
+    h.font.name = 'Calibri'
 
-def add_table(headers, rows):
+def add_table(headers, rows, col_widths=None):
     table = doc.add_table(rows=1, cols=len(headers))
     table.style = 'Light Grid Accent 1'
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    hdr_cells = table.rows[0].cells
+    hdr = table.rows[0].cells
     for i, h in enumerate(headers):
-        hdr_cells[i].text = h
+        hdr[i].text = h
+        for p in hdr[i].paragraphs:
+            p.style.font.bold = True
     for row_data in rows:
-        row_cells = table.add_row().cells
+        cells = table.add_row().cells
         for i, val in enumerate(row_data):
-            row_cells[i].text = str(val)
+            cells[i].text = str(val)
+            for p in cells[i].paragraphs:
+                for r in p.runs:
+                    r.font.size = Pt(9)
+    if col_widths:
+        for i, w in enumerate(col_widths):
+            for row in table.rows:
+                row.cells[i].width = Cm(w)
     return table
 
-def add_para(text, bold=False):
+def add_para(text, bold=False, size=None):
     p = doc.add_paragraph()
-    run = p.add_run(text)
-    run.bold = bold
+    r = p.add_run(text)
+    r.bold = bold
+    if size:
+        r.font.size = Pt(size)
     return p
 
 def add_heading(text, level=1):
     return doc.add_heading(text, level=level)
 
+def add_code(code_text):
+    lines = code_text.strip().split('\n')
+    for line in lines:
+        p = doc.add_paragraph(style='CodeBlock')
+        r = p.add_run(line if line else ' ')
+        r.font.name = 'Consolas'
+        r.font.size = Pt(8.5)
+
+def add_bullet(text, level=0):
+    p = doc.add_paragraph(text, style='List Bullet')
+    p.paragraph_format.left_indent = Cm(1.27 + level * 1.27)
+    return p
+
+def add_subsection_heading(text):
+    """Add a subsection heading (bold, no number)."""
+    p = doc.add_paragraph()
+    r = p.add_run(text)
+    r.bold = True
+    r.font.size = Pt(11)
+    r.font.color.rgb = RGBColor(0x33, 0x55, 0x88)
+    return p
+
 # ── Title Page ────────────────────────────────────────────────────────────
+doc.add_paragraph()
 doc.add_paragraph()
 doc.add_paragraph()
 title = doc.add_paragraph()
 title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-run = title.add_run('SHELDRA')
-run.bold = True
-run.font.size = Pt(36)
-run.font.color.rgb = RGBColor(0x1A, 0x3C, 0x6E)
+r = title.add_run('SHELDRA')
+r.bold = True
+r.font.size = Pt(42)
+r.font.color.rgb = RGBColor(0x1A, 0x3C, 0x6E)
 
-subtitle = doc.add_paragraph()
-subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-run = subtitle.add_run('Safety Holographic Enhanced Learning\n& Decision-Reality Assistant')
-run.font.size = Pt(18)
-run.font.color.rgb = RGBColor(0x4A, 0x6F, 0xA5)
+sub = doc.add_paragraph()
+sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+r = sub.add_run('Safety Holographic Enhanced Learning & Decision-Reality Assistant')
+r.font.size = Pt(16)
+r.font.color.rgb = RGBColor(0x4A, 0x6F, 0xA5)
 
-tagline = doc.add_paragraph()
-tagline.alignment = WD_ALIGN_PARAGRAPH.CENTER
-run = tagline.add_run('The World\'s First Holographic AI Safety Coach')
-run.italic = True
-run.font.size = Pt(14)
-run.font.color.rgb = RGBColor(0x6B, 0x8F, 0xC6)
+sub2 = doc.add_paragraph()
+sub2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+r = sub2.add_run('Enterprise Architecture Document')
+r.font.size = Pt(14)
+r.font.color.rgb = RGBColor(0x6B, 0x8F, 0xC6)
 
 doc.add_paragraph()
 meta = doc.add_paragraph()
 meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
-meta.add_run(f'ET AI Hackathon 2026 — Industrial Safety Intelligence Challenge\n')
-meta.add_run(f'Date: {datetime.date.today().strftime("%B %d, %Y")}\n')
-meta.add_run(f'Team: 3 Members (AI/ML \u00b7 Backend/Infra \u00b7 Full-Stack)')
+meta.add_run(f'ET AI Hackathon 2026 \u2014 Industrial Safety Intelligence Challenge\n')
+meta.add_run(f'Version 1.0 \u2014 {datetime.date.today().strftime("%B %d, %Y")}\n')
+meta.add_run(f'Classification: Public \u2014 Architecture Overview')
 
 doc.add_page_break()
 
-# ── Table of Contents ────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════
+# TABLE OF CONTENTS (Manual)
+# ═══════════════════════════════════════════════════════════════════════════
 doc.add_heading('Table of Contents', level=1)
-toc_items = [
-    '1. Problem Reframing',
-    '2. Vision Statement',
-    '3. Unique Value Proposition',
-    '4. SHELDRA \u2014 The Holographic AI Safety Coach',
-    '5. Decision Tree Algorithm',
-    '6. System Architecture Overview',
-    '7. Multi-Agent Architecture (Supporting SHELDRA)',
-    '8. SHELDRA AI Pipeline',
-    '9. Personalization Engine',
-    '10. Computer Vision Pipeline (SHELDRA\u2019s Eyes)',
-    '11. Time-Series Prediction Models',
-    '12. Knowledge Graph Design',
-    '13. RAG Architecture',
-    '14. Digital Twin Architecture',
-    '15. Data Ingestion Pipeline',
-    '16. Graph AI Opportunities',
-    '17. Explainable AI Layer',
-    '18. Human-in-the-Loop Workflow',
-    '19. Emergency Response Workflow',
-    '20. VR Training Integration',
-    '21. Database Schema & Data Model',
-    '22. API Architecture',
-    '23. Frontend Dashboard Design',
-    '24. Live Demo Flow',
-    '25. Tech Stack with Justification',
-    '26. AI Models with Justification',
-    '27. Open-Source Tools',
-    '28. Cloud Deployment Architecture',
-    '29. Evaluation Metrics',
-    '30. Future Roadmap: MVP \u2192 Enterprise SaaS',
-    '31. Risks and Mitigations',
-    '32. Why SHELDRA Can Become a Unicorn Startup',
+sections = [
+    '1. Executive Summary', '2. Problem Statement', '3. Vision',
+    '4. Functional Requirements', '5. Non-Functional Requirements',
+    '6. Overall System Architecture', '7. SHELDRA Intelligence Engine',
+    '8. Decision Tree Learning System', '9. Computer Vision Pipeline',
+    '10. Time Series Analytics', '11. Knowledge Graph',
+    '12. Retrieval Augmented Generation', '13. Data Flow Architecture',
+    '14. Database Design', '15. API Architecture', '16. Frontend Architecture',
+    '17. Security', '18. Deployment Architecture', '19. Technology Stack',
+    '20. AI Models', '21. Performance', '22. Scalability',
+    '23. Demo Flow', '24. Roadmap', '25. Risks', '26. Future Enhancements'
 ]
-for item in toc_items:
-    p = doc.add_paragraph(item)
-    p.paragraph_format.space_after = Pt(2)
+for s in sections:
+    p = doc.add_paragraph(s)
+    p.paragraph_format.space_after = Pt(1)
 
 doc.add_page_break()
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 1. PROBLEM REFRAMING
+# 1. EXECUTIVE SUMMARY
 # ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('1. Problem Reframing', level=1)
+add_heading('1. Executive Summary', level=1)
 
 add_para(
-    'Industrial safety today is built on a broken premise: that a human supervisor watching '
-    '50+ camera feeds and scrolling through dashboards can prevent incidents. This is not '
-    'a monitoring problem \u2014 it is a guidance problem.'
+    'SHELDRA is a unified AI system for industrial safety intelligence. Unlike conventional '
+    'approaches that layer AI features onto dashboards, SHELDRA is a single Intelligence Engine '
+    'with 11 internal modules that together perceive, reason, learn, and respond to industrial '
+    'safety events in real time.'
 )
+add_para(
+    'The system ingests heterogeneous data streams \u2014 camera frames, IoT sensor telemetry, '
+    'worker interaction history, safety documentation \u2014 through a single Event Orchestrator '
+    'that routes each input to the appropriate internal module. An LLM Reasoning Core generates '
+    'personalized responses, a Decision Tree Engine maintains self-improving hazard resolution '
+    'trees, and a Memory Manager preserves both session state and long-term interaction history. '
+    'Every decision is logged by the Explainability Engine and validated by Safety Guardrails '
+    'before delivery.'
+)
+add_para(
+    'The architecture follows a strict layering: the SHELDRA Intelligence Engine has zero '
+    'knowledge of the frontend. All interactions occur through a FastAPI API layer. The '
+    'presentation layer (dashboard, 3D avatar, voice, VR) is interchangeable without modifying '
+    'the engine. This separation enables enterprise deployment scenarios from single-facility '
+    'on-premise to global multi-region SaaS.'
+)
+add_para(
+    'Key technical decisions include: Apache Kafka for durable event streaming, Neo4j for '
+    'relationship-rich knowledge representation, Qdrant for hybrid vector search, Llama 3 8B '
+    'as the reasoning core, and ONNX Runtime for cross-platform model serving. All components '
+    'are containerized for deployment consistency.'
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 2. PROBLEM STATEMENT
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('2. Problem Statement', level=1)
 
 add_para(
-    'Traditional systems ask: "What went wrong?" They generate reports after the fact. '
-    'They classify, log, and archive incidents. They treat safety as retrospective compliance.'
+    'Industrial safety monitoring today suffers from four architectural failures that no '
+    'single-vendor solution adequately addresses.'
 )
 
+add_subsection_heading('2.1 Latent Detection')
 add_para(
-    'We reframe the problem around three fundamental insights:'
+    'Current systems detect incidents after they occur. Data is collected, stored, and analyzed '
+    'retrospectively. By the time a dashboard indicator changes, the event has already '
+    'happened. This is a fundamental architectural limitation of batch-oriented data pipelines '
+    'that cannot support real-time intervention.'
 )
 
-insights = [
-    ('Workers need a coach, not a dashboard.',
-     'The most effective safety interventions happen in the moment, not in the post-mortem. '
-     'A worker removing PPE does not need a report generated \u2014 they need a voice saying '
-     '"Your harness clip is not fastened." SHELDRA is that voice.'),
-    ('Safety knowledge is trapped in documents.',
-     'OSHA manuals, SOPs, and incident reports contain the knowledge to prevent accidents, '
-     'but this knowledge is inaccessible in the moment of need. A worker facing a gas leak '
-     'cannot flip through a 200-page manual. SHELDRA retrieves and delivers the exact '
-     'procedure, in their language, at their experience level.'),
-    ('Every incident is a learning opportunity \u2014 if you capture it.',
-     'Current systems lose 90% of the signal from near-misses. A corrected behavior, '
-     'a supervisor override, a successful evacuation \u2014 these are data points that should '
-     'improve every future response. Our Decision Tree algorithm captures every outcome '
-     'and updates itself every 5 minutes.'),
+add_subsection_heading('2.2 Modality Isolation')
+add_para(
+    'Computer vision, IoT telemetry, and safety documentation are managed by separate systems '
+    'with no shared context. A worker who removes PPE while a nearby machine shows anomalous '
+    'vibration and gas readings represents a compound risk that no isolated system can detect. '
+    'The absence of a unified intelligence layer means compound risks are invisible.'
+)
+
+add_subsection_heading('2.3 Static Knowledge')
+add_para(
+    'Safety checklists and standard operating procedures are static documents. When an incident '
+    'reveals a gap in a procedure, updating that procedure for all workers is an organizational '
+    'process that takes weeks or months. There is no feedback loop between incident outcome and '
+    'procedure improvement.'
+)
+
+add_subsection_heading('2.4 One-Size-Fits-All Guidance')
+add_para(
+    'Safety instructions are delivered identically to every worker regardless of experience, '
+    'language, learning speed, or current emotional state. A 20-year veteran and a first-day '
+    'intern receive the same procedure document. This increases cognitive load for experienced '
+    'workers and provides insufficient guidance for novices.'
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 3. VISION
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('3. Vision', level=1)
+add_para(
+    'A single AI system that perceives every signal in an industrial environment, reasons over '
+    'fused data with a Large Language Model, maintains a living knowledge graph of entities '
+    'and relationships, generates self-improving hazard resolution trees, and delivers '
+    'personalized, explainable safety guidance through any interface \u2014 from a 3D '
+    'holographic avatar to a simple text alert.'
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 4. FUNCTIONAL REQUIREMENTS
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('4. Functional Requirements', level=1)
+
+add_para('The platform shall satisfy the following functional requirements:', bold=True)
+
+func_reqs = [
+    ['FR1', 'Real-Time Coaching', 'SHELDRA shall provide personalized safety guidance to workers within 3 seconds of any triggering event, adapting its response to the worker\u2019s profile, language, and current emotional state.'],
+    ['FR2', 'Hazard Resolution Trees', 'The system shall generate, maintain, and automatically update decision trees for hazard resolution. Trees shall version on every update with the ability to roll back to any prior version.'],
+    ['FR3', 'Multi-Modal Perception', 'SHELDRA shall ingest and fuse data from camera feeds (object detection, pose estimation), IoT sensors (temperature, vibration, gas, noise), and safety documentation (procedures, regulations, incident reports).'],
+    ['FR4', 'Personalization', 'The system shall maintain individual worker profiles that include experience level, learning speed, certifications, interaction history, and emotional state. SHELDRA\u2019s responses shall adapt along six dimensions: content depth, vocabulary, speech rate, tone, feedback style, and language.'],
+    ['FR5', 'Explainability', 'Every SHELDRA decision shall be traceable to specific observations, rules, and reasoning steps. The system shall produce natural language explanations, confidence scores with provenance, and structured decision traces.'],
+    ['FR6', 'Human-in-the-Loop Oversight', 'Supervisors shall be able to monitor all SHELDRA interactions, override recommendations, and escalate decisions. Every HITL action shall be logged for audit.'],
+    ['FR7', 'Knowledge Grounding', 'All SHELDRA guidance shall be grounded in retrievable safety documentation. Responses shall include citations to specific document sections.'],
+    ['FR8', 'Avatar Interface', 'SHELDRA shall render as a 3D holographic avatar with lip-sync, gesture animation, and emotional expression. The avatar shall be capable of appearing in web dashboard, mobile, and VR environments.'],
 ]
+add_table(['ID', 'Requirement', 'Description'], func_reqs)
 
-for name, desc in insights:
+# ═══════════════════════════════════════════════════════════════════════════
+# 5. NON-FUNCTIONAL REQUIREMENTS
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('5. Non-Functional Requirements', level=1)
+
+nfr = [
+    ['NFR1', 'Latency', 'End-to-end response time < 3 seconds for 95th percentile under normal load. SHELDRA streaming response first token < 500ms.'],
+    ['NFR2', 'Throughput', 'System shall sustain 10,000 events per second from sensor and vision sources, with burst capacity to 50,000 events/second.'],
+    ['NFR3', 'Availability', 'Production target: 99.9% uptime. Hackathon: single-node recovery within 60 seconds.'],
+    ['NFR4', 'Security', 'All API traffic over TLS 1.3. Authentication via JWT with role-based access control (worker, supervisor, admin). Audit log is append-only.'],
+    ['NFR5', 'Privacy', 'Camera frames processed ephemerally; no raw video stored without explicit retention policy. Worker profiles respect data minimization.'],
+    ['NFR6', 'Extensibility', 'New perception modules (e.g., acoustic anomaly detection) can be added by implementing a single interface and registering with the Event Orchestrator.'],
+    ['NFR7', 'Offline Operation', 'Core SHELDRA reasoning functions must operate without internet connectivity. Cloud-dependent features (TTS, embedding) degrade gracefully.'],
+    ['NFR8', 'Observability', 'All module decisions logged with trace_id. Prometheus metrics for latency, throughput, error rate per module. Structured logging in JSON format.'],
+]
+add_table(['ID', 'Requirement', 'Description'], nfr)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 6. OVERALL SYSTEM ARCHITECTURE
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('6. Overall System Architecture', level=1)
+
+add_para(
+    'The system is organized into five strict layers. Each layer communicates only with its '
+    'adjacent layers, enforcing separation of concerns and enabling independent scaling.'
+)
+
+add_subsection_heading('6.1 Layer Diagram')
+add_code("""
+User (Worker / Supervisor / Safety Officer)
+     |
+     | HTTPS / WSS
+     v
++----------------------------------------------------+
+|  Presentation Layer                                |
+|  Next.js 14 · R3F 3D Avatar · WebRTC Voice       |
+|  React Flow (DT Viz) · A-Frame VR                 |
+|  Tailwind CSS · shadcn/ui · WebSocket Client      |
++----------------------------------------------------+
+     | REST + WebSocket
+     v
++----------------------------------------------------+
+|  API Layer                                         |
+|  FastAPI · Pydantic · WebSocket Manager            |
+|  Entry: /api/v1/sheldra/*                          |
+|  Auth: JWT + RBAC                                  |
++----------------------------------------------------+
+     | Internal IPC
+     v
++----------------------------------------------------+
+|  SHELDRA Intelligence Engine                       |
+|  +------------------+  +------------------+        |
+|  | EventOrchestrator|  | LLM Core         |        |
+|  | DecisionTree     |  | Personalization  |        |
+|  | KG Manager       |  | RAG Engine       |        |
+|  | VisionIntel      |  | MonitorIntel     |        |
+|  | Memory Manager   |  | Explainability   |        |
+|  | Safety Guardrails|  |                  |        |
+|  +------------------+  +------------------+        |
++----------------------------------------------------+
+     | Kafka / Redis / gRPC
+     v
++----------------------------------------------------+
+|  Infrastructure Layer                              |
+|  Apache Kafka · Redis · MinIO · Service Mesh       |
+|  Health Checks · Circuit Breakers · Rate Limiters  |
++----------------------------------------------------+
+     | Native drivers
+     v
++----------------------------------------------------+
+|  Data Layer                                        |
+|  Neo4j (Graph) · Qdrant (Vectors)                  |
+|  InfluxDB (Time-Series) · PostgreSQL (Relational)  |
++----------------------------------------------------+
+     | Managed services
+     v
++----------------------------------------------------+
+|  Cloud Layer                                       |
+|  AWS ECS Fargate · RDS · S3 · CloudFront · Route53 |
++----------------------------------------------------+
+""")
+
+add_subsection_heading('6.2 Design Decisions')
+
+decisions = [
+    ['Why a single API entry point?', 'All external interactions go through /api/v1/sheldra/*. '
+     'This enforces consistent authentication, validation, tracing, and rate limiting. The '
+     'engine never exposes internal module endpoints externally.'],
+    ['Why strict layering?', 'Each layer can be independently scaled, deployed, tested, and '
+     'replaced. The engine has zero knowledge of the frontend. The data layer has zero '
+     'knowledge of the business logic.'],
+    ['Why Kafka as the nervous system?', 'Kafka provides durable, replayable, partitioned event '
+     'storage. Every module that produces events (Vision, Monitoring) writes to Kafka. '
+     'Every module that consumes events (Orchestrator, Decision Tree) reads from Kafka. '
+     'This decouples producers from consumers in both time and space.'],
+]
+for title, desc in decisions:
     p = doc.add_paragraph()
-    run = p.add_run(f'{name} ')
-    run.bold = True
+    r = p.add_run(title + ' ')
+    r.bold = True
+    p.add_run(desc)
+
+add_subsection_heading('6.3 Tradeoff Analysis')
+tradeoffs = [
+    ['Monolithic engine vs. microservices', 'Chosen: Modular engine (single process, module isolation). '
+     'Tradeoff: Deploy as one unit = simpler operations, no RPC overhead. Future: Extract high-load '
+     'modules (Vision, Monitoring) into separate services with gRPC.'],
+    ['Kafka vs. message queue (RabbitMQ)', 'Chosen: Kafka. Tradeoff: Higher operational complexity, '
+     'better for replay, audit, and stream processing. RabbitMQ would be simpler for point-to-point '
+     'but lacks the durability and partitioning needed for sensor data.'],
+    ['Graph DB vs. relational for relationships', 'Chosen: Neo4j (graph). Tradeoff: Graph queries '
+     'are 10-100x faster for multi-hop traversals (root cause analysis). Relational would require '
+     'costly JOINs. Graph DB adds operational overhead.'],
+]
+add_table(['Decision', 'Choice', 'Rationale'], tradeoffs)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 7. SHELDRA INTELLIGENCE ENGINE
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('7. SHELDRA Intelligence Engine', level=1)
+
+add_para(
+    'The SHELDRA Intelligence Engine is a single AI system composed of 11 internal modules. '
+    'Every module implements a common interface: `__init__(config)`, `process(context) -> '
+    'ModuleResult`, and `health() -> bool`. The EventOrchestrator routes incoming events to '
+    'the appropriate modules and assembles their outputs into a unified response.'
+)
+
+add_subsection_heading('7.1 Module Directory')
+add_code("""
+sheldra_engine/
+  __init__.py                  # Engine entry point: SHELDRAEngine class
+  orchestrator.py              # EventOrchestrator: routing, lifecycle, tracing
+  llm_core.py                  # LLM Reasoning Core: prompt assembly, inference, parsing
+  decision_tree.py             # Decision Tree Engine: generation, scoring, update cycle
+  personalization.py           # Personalization Engine: profiles, adaptation, learning speed
+  kg_manager.py                # Knowledge Graph Manager: Cypher builder, CRUD, caching
+  rag_engine.py                # RAG Engine: embedding, retrieval, citation tracking
+  vision_intel.py              # Vision Intelligence: detection, pose, tracking
+  monitoring_intel.py          # Monitoring Intelligence: anomaly, correlation, scoring
+  memory_manager.py            # Memory Manager: short-term (Redis), long-term (KG)
+  explainability.py            # Explainability Engine: trace, SHAP, confidence
+  safety_guardrails.py         # Safety Guardrails: validation, constraints, audit
+  models/                      # Pydantic models for inter-module communication
+    events.py                  # Event types, payloads, metadata
+    context.py                 # Context assembly schemas
+    responses.py               # SHELDRA response schema
+  tests/                       # Module-level tests
+""")
+
+add_subsection_heading('7.2 Module Responsibilities')
+
+modules = [
+    ['EventOrchestrator', 'Entry point. Receives all events, validates, routes to modules, '
+     'manages lifecycle (validate \u2192 route \u2192 execute \u2192 collect \u2192 respond). '
+     'Propagates trace_id. Handles module timeouts and failures.'],
+    ['LLM Core', 'Central reasoning. Assembles context from all modules into a prompt. '
+     'Executes Llama 3 8B inference. Parses structured output. Supports streaming.'],
+    ['DecisionTree', 'Hazard resolution tree management. Generates trees from KG + RAG. '
+     'Scores branches on outcomes. Runs 5-min update cycle. Versions and supports rollback.'],
+    ['Personalization', 'Worker profile management. Computes adaptation dimensions '
+     '(depth, tone, vocabulary, rate, feedback, language). Injects profile into LLM context.'],
+    ['KGManager', 'Graph database interface. Parameterized Cypher queries. CRUD for all '
+     'node/edge types. Temporal query support. Query caching via Redis.'],
+    ['RAGEngine', 'Document retrieval. PDF chunking, E5 embedding, Qdrant hybrid search. '
+     'Cross-encoder re-ranking. Citation tracking.'],
+    ['VisionIntel', 'Camera perception. YOLOv8n for PPE/person detection. RTMPose for pose. '
+     'ByteTrack for ID persistence. Polygon ROI for zone encroachment.'],
+    ['MonitorIntel', 'IoT perception. TimesNet anomaly detection. Multi-sensor correlation. '
+     'Adaptive thresholding. Alert suppression.'],
+    ['MemoryManager', 'State persistence. Short-term: Redis session store with TTL. '
+     'Long-term: KG interaction history. Context window assembly for LLM.'],
+    ['Explainability', 'Decision tracing. Collects module inputs/outputs. Generates NL '
+     'explanations. Computes confidence provenance. SHAP integration.'],
+    ['SafetyGuardrails', 'Output validation. Constraint rules. Confidence threshold enforcement. '
+     'Procedure contradiction check. Audit log writer.'],
+]
+add_table(['Module', 'Responsibility'], modules)
+
+add_subsection_heading('7.3 Inter-Module Data Flow')
+
+add_para('Sequence diagram for a SHELDRA chat request:', bold=True)
+add_code("""
+  Client          API          Orchestrator    LLM Core    KG Mgr   RAG    Personal   Memory
+    |              |                |              |          |       |        |         |
+    | POST /chat   |                |              |          |       |        |         |
+    |------------->|                |              |          |       |        |         |
+    |              | validate auth  |              |          |       |        |         |
+    |              |----------------|              |          |       |        |         |
+    |              | route(event)   |              |          |       |        |         |
+    |              |--------------->|              |          |       |        |         |
+    |              |                | load_profile |          |       |        |         |
+    |              |                |------------------------->|       |        |         |
+    |              |                | load_history  |          |       |        |         |
+    |              |                |---------------------------------------->|         |
+    |              |                | retrieve_know |          |       |        |         |
+    |              |                |----------------------->|       |        |         |
+    |              |                |---------------------->|       |        |         |
+    |              |                | assemble_context      |       |        |         |
+    |              |                |--------------->|      |       |        |         |
+    |              |                |                | infer |       |        |         |
+    |              |                |                |------>|       |        |         |
+    |              |                | parse_response |       |       |        |         |
+    |              |                |<---------------|      |       |        |         |
+    |              |                | validate       |              |        |         |
+    |              |                | log_trace      |              |        |         |
+    |              |<---------------|                |              |        |         |
+    | stream resp  |                |                |              |        |         |
+    |<-------------|                |                |              |        |         |
+""")
+
+add_subsection_heading('7.4 Event Flow')
+add_para(
+    'The EventOrchestrator supports multiple event types, each routing to a different set '
+    'of modules:'
+)
+event_flows = [
+    ['chat', 'Worker sends message', 'Orchestrator, LLM Core, Personalization, Memory, RAG, KG Manager, Explainability, Guardrails'],
+    ['vision.detection', 'Camera detects event', 'Orchestrator, VisionIntel, KG Manager, DecisionTree, LLM Core, Explainability'],
+    ['sensor.alert', 'Anomaly detected', 'Orchestrator, MonitorIntel, KG Manager, DecisionTree, LLM Core, Explainability'],
+    ['tree.update', 'Decision tree modified', 'Orchestrator, DecisionTree, KG Manager'],
+    ['supervisor.action', 'HITL override', 'Orchestrator, KG Manager, Explainability, SafetyGuardrails'],
+]
+add_table(['Event Type', 'Trigger', 'Modules Invoked'], event_flows)
+
+add_subsection_heading('7.5 Failure Handling')
+add_para(
+    'Each module has a configurable timeout (default 5s). If a module exceeds the timeout, '
+    'the Orchestrator logs the failure (with trace_id), records partial results, and continues '
+    'with available data. The LLM Core is informed of which modules failed so it can adjust '
+    'its response accordingly (e.g., "I cannot check your current location because the '
+    'Knowledge Graph is temporarily unavailable."). The engine degrades gracefully: Vision '
+    'failure means no visual feedback, but text chat continues.'
+)
+
+add_subsection_heading('7.6 Future Extensibility')
+add_para(
+    'New modules are added by subclassing the Module base class and registering with the '
+    'Orchestrator. Examples: AcousticIntel (microphone array for abnormal sound detection), '
+    'AirQualityIntel (particulate matter, VOCs), BiometricIntel (heart rate, skin temperature '
+    'from wearables). No existing module needs modification for a new module to be added.'
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 8. DECISION TREE LEARNING SYSTEM
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('8. Decision Tree Learning System', level=1)
+
+add_subsection_heading('8.1 Why')
+add_para(
+    'Static safety checklists fail because they cannot adapt to new information. If a checklist '
+    'step proves ineffective, it remains in the procedure until a human updates it. The Decision '
+    'Tree Learning System replaces static checklists with self-improving graphs that learn from '
+    'every incident outcome.'
+)
+
+add_subsection_heading('8.2 Tree Data Model')
+add_code("""
+{
+  "tree_id": "gas-leak-response",
+  "hazard_type": "gas_leak",
+  "version": 7,
+  "created_at": "2026-07-07T08:00:00Z",
+  "last_updated": "2026-07-07T13:30:00Z",
+  "overall_accuracy": 0.89,
+  "total_evaluations": 152,
+  "nodes": [
+    {
+      "node_id": "n001",
+      "type": "question",
+      "content": "Gas level > 50ppm?",
+      "conditions": { "sensor.gas_ppm": { "gt": 50 } },
+      "branches": [
+        { "to": "n002", "label": "Yes", "action": "evacuate_zone" },
+        { "to": "n003", "label": "No", "action": "increase_monitoring" }
+      ],
+      "accuracy": 0.94,
+      "times_taken": 47
+    },
+    {
+      "node_id": "n002",
+      "type": "action",
+      "content": "Initiate Zone B evacuation",
+      "branches": [
+        { "to": "n004", "label": "Evacuated", "action": "seal_zone" },
+        { "to": "n005", "label": "Remaining", "action": "alert_rescue" }
+      ],
+      "accuracy": 0.91,
+      "times_taken": 23
+    }
+  ],
+  "root_id": "n001"
+}
+""")
+
+add_subsection_heading('8.3 Generation Pipeline')
+add_para(
+    'When a new hazard type is encountered, the system generates an initial tree from three sources:'
+)
+add_bullet('Knowledge Graph: Hazard taxonomy nodes link to applicable SafetyRule nodes. Each rule contributes a decision node with conditions and branches.')
+add_bullet('RAG Engine: Procedure documents for the hazard type are parsed into action nodes. Steps become sequential action nodes with confirmation branches.')
+add_bullet('Historical Incidents: Past incidents of the same hazard type are analyzed for common resolution paths. Frequent paths become preferred branches with higher initial confidence.')
+add_para('')
+add_para('The generator produces a directed acyclic graph validated for completeness: all branches must terminate in a resolution or escalation node.', bold=False)
+
+add_subsection_heading('8.4 Update Cycle (5 Minutes)')
+add_para(
+    'A background daemon executes every 5 minutes. Each cycle:'
+)
+add_bullet('Collect Outcomes: Query the Knowledge Graph for all completed SHELDRASession nodes where the hazard matches this tree and the session completed in the last 5 minutes.')
+add_bullet('Score Each Branch: For each session, compare the predicted resolution path against the actual outcome. Success=1.0, Partial=0.5, Failure=0.0. Update the rolling 10-trial accuracy for each traversed node.')
+add_bullet('Prune: Any branch with accuracy < 0.5 over the last 10 evaluations is flagged. If it remains below 0.5 for 3 consecutive cycles, the branch is removed.')
+add_bullet('Generate: Analyze failed resolutions for common patterns. If a pattern appears 3+ times, propose a new branch with the alternative action.')
+add_bullet('Version: Increment tree version. Store the previous version in the Knowledge Graph with its accuracy metrics for rollback.')
+add_bullet('Notify: Write a tree.update event to Kafka. SHELDRA can inform supervisors of the update.')
+
+add_subsection_heading('8.5 Accuracy Measurement')
+acc_table = [
+    ['Success', '1.0', 'Hazard resolved correctly. No injuries. No escalation needed. Worker followed recommended path.'],
+    ['Partial', '0.5', 'Hazard resolved but with delay, confusion, or deviation. Escalation not required but supervisor noted issues.'],
+    ['Failure', '0.0', 'Escalation required. Incorrect procedure followed. Near-miss or injury occurred.'],
+]
+add_table(['Outcome', 'Score', 'Definition'], acc_table)
+add_para('')
+add_para(
+    'Node accuracy = sum(scores) / count over rolling 10-trial window. Tree accuracy = '
+    'mean of all leaf node accuracies. Displayed on the dashboard with trend line.'
+)
+
+add_subsection_heading('8.6 Technology Choice')
+add_para(
+    'The Decision Tree Engine is implemented in pure Python without a workflow engine '
+    '(e.g., Camunda, Temporal) because: (a) trees are small data structures (10-50 nodes) '
+    'that fit in memory, (b) the update cycle is computation-light (score aggregation, '
+    'not heavy processing), and (c) eliminating the workflow engine reduces deployment '
+    'complexity for the hackathon. Future enterprise deployments may adopt Temporal for '
+    'long-running workflow orchestration.'
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 9. COMPUTER VISION PIPELINE
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('9. Computer Vision Pipeline', level=1)
+
+add_subsection_heading('9.1 Why')
+add_para(
+    'Camera feeds are the richest asynchronous data source in industrial environments. The '
+    'Vision Intelligence module transforms raw frames into structured observations that the '
+    'Event Orchestrator can route to the LLM Core for SHELDRA feedback.'
+)
+
+add_subsection_heading('9.2 Pipeline Architecture')
+add_code("""
+RTSP Stream
+    |
+    v
+FFmpeg Frame Grabber (configurable FPS, default 5)
+    |
+    v
+Frame Buffer (bounded queue, max 100 frames)
+    |
+    v
++------------------------------------------------+
+| Parallel Inference                              |
+| YOLOv8n (PPE + Person)    RTMPose (Pose)        |
+| 6 classes, nms=0.5        17 keypoints          |
+|    |                           |                |
+|    v                           v                |
+| ByteTrack (person ID)    Behavior Analyzer      |
+| IoU matching across      Reaching, climbing,    |
+| frames for persistence   fall detection         |
+|    |                           |                |
++----+---------------------------+----------------+
+    |
+    v
+Structured Event:
+{
+  "event_type": "vision.detection",
+  "detections": [
+    { "class": "missing_helmet", "worker_id": "w3124",
+      "zone": "A3", "confidence": 0.94, "bbox": [...] }
+  ],
+  "timestamp": "...",
+  "camera_id": "cam-07"
+}
+    |
+    v
+Kafka Topic: vision.detections
+    |
+    v
+EventOrchestrator -> modules...
+""")
+
+add_subsection_heading('9.3 Models and Performance')
+cv_perf = [
+    ['PPE Detection', 'YOLOv8n (nano)', 'CPU-only', '~15ms', '30+ FPS on CPU via ONNX. Detects all 6 PPE classes in single forward pass.'],
+    ['Person Detection', 'YOLOv8s (small)', 'GPU (optional)', '2-3ms on T4', 'Larger model for accurate person detection. Runs on GPU if available, ONNX CPU otherwise.'],
+    ['Person Tracking', 'ByteTrack', 'CPU', '<1ms', 'IoU-based association across frames. Maintains worker IDs for SHELDRA to address specific workers.'],
+    ['Pose Estimation', 'RTMPose-m', 'GPU', '~5ms/person', '17-keypoint pose. Enables ergonomic feedback and fall detection.'],
+    ['Zone Encroachment', 'Polygon ROI + IoU', 'CPU', '<1ms', 'No ML needed. Pre-defined zone polygons. Intersection of person bbox with restricted zone.'],
+]
+add_table(['Task', 'Model', 'Hardware', 'Latency', 'Details'], cv_perf)
+
+add_subsection_heading('9.4 Data Flow')
+add_para(
+    'Each camera runs as an independent processing thread. Frame grabbing and inference are '
+    'pipelined: while frame N is being inferred, frame N+1 is being grabbed. The frame buffer '
+    'provides backpressure: if inference is slower than the grab rate, old frames are dropped '
+    '(newest-first eviction). This ensures the system always processes the most recent frame, '
+    'not a backlog.'
+)
+
+add_subsection_heading('9.5 Technology Choice')
+add_para(
+    'ONNX Runtime was chosen over TensorRT and PyTorch JIT because: (a) ONNX provides a single '
+    'runtime for all models (vision + time-series), (b) ONNX supports both CPU and GPU with '
+    'the same API, and (c) ONNX execution providers (TensorRT, OpenVINO, CoreML) allow '
+    'hardware-specific optimization without code changes. The tradeoff is that ONNX may be '
+    '5-10% slower than a native TensorRT deployment for GPU inference.'
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 10. TIME SERIES ANALYTICS
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('10. Time Series Analytics', level=1)
+
+add_subsection_heading('10.1 Why')
+add_para(
+    'IoT sensors produce continuous numerical data that must be analyzed for anomalies. The '
+    'Monitoring Intelligence module detects deviations from expected patterns and produces '
+    'hazard triggers that feed into the Decision Tree system.'
+)
+
+add_subsection_heading('10.2 Anomaly Detection Pipeline')
+add_code("""
+Sensor Network (simulated)
+    |
+    | MQTT / Kafka
+    v
+Kafka Topic: sensor.readings
+    |
+    +---- Partition by sensor_id (temp_01, vib_02, gas_03)
+    |
+    v
++----------------------------------------------------+
+| Sliding Window Buffer (60 readings per sensor)     |
+| Z-score normalization per sensor type              |
+| Linear interpolation for < 5s gaps                 |
++----------------------------------------------------+
+    |
+    v
++----------------------------------------------------+
+| TimesNet Inference                                  |
+| Input: (60, num_sensors) tensor                    |
+| Output: reconstruction error per sensor            |
+| Anomaly = reconstruction_error > adaptive_thresh   |
++----------------------------------------------------+
+    |
+    v
++----------------------------------------------------+
+| Multi-Sensor Correlation                            |
+| Weighted compound score:                            |
+|   Vib(0.4) + Temp(0.3) + Gas(0.3)                 |
+| Compound > 0.7 -> compound_alert                   |
++----------------------------------------------------+
+    |
+    v
+Kafka Topic: system.alerts
+    |
+    v
+EventOrchestrator -> DecisionTree -> SHELDRA
+""")
+
+add_subsection_heading('10.3 Model Details')
+add_para(
+    'TimesNet (Microsoft Research, ICLR 2023 Best Paper) transforms 1D time series into 2D '
+    'tensors using Fast Fourier Transform for period detection. This captures multiple '
+    'temporal patterns simultaneously: shift patterns (8-hour cycles), machine cycles '
+    '(varying by equipment type), and seasonal variations (day/night, weekday/weekend). '
+    'The reconstruction error is the anomaly score: high error means the current pattern '
+    'does not match learned normal patterns.'
+)
+
+add_subsection_heading('10.4 Adaptive Thresholding')
+add_para(
+    'Anomaly thresholds are not static. The system maintains a rolling baseline per '
+    'sensor per time-of-day bucket (1-hour windows). A "spike" at 3 AM that is normal '
+    'for shift change at 7 AM would not trigger an alert. This reduces false positives '
+    'by approximately 60% compared to fixed thresholds.'
+)
+
+add_subsection_heading('10.5 Alert Suppression')
+add_para(
+    'A 30-second debounce window prevents alert storms. If the same sensor triggers an '
+    'anomaly every second for 10 seconds, only one alert is emitted. The alert includes '
+    'the peak anomaly score and duration. This is critical for industrial environments '
+    'where sensors can oscillate near a threshold.'
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 11. KNOWLEDGE GRAPH
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('11. Knowledge Graph', level=1)
+
+add_subsection_heading('11.1 Why')
+add_para(
+    'Relational databases become inefficient when querying multi-hop relationships: "Find '
+    'all workers who are in Zone A, who have been involved in incidents similar to the '
+    'current one, who speak Spanish, and who have a supervisor currently on shift." '
+    'A graph database traverses these relationships in constant time per hop, whereas '
+    'a relational database requires multiple JOIN operations that scale with table size.'
+)
+
+add_subsection_heading('11.2 Schema (Nodes)')
+
+nodes_schema = [
+    ['Worker', 'worker_id, name, role, experience_level, learning_speed, language, certifications[], ppe_compliance_rate, emotional_state'],
+    ['Hazard', 'hazard_id, type, severity, frequency, first_observed, last_observed, tree_ids[]'],
+    ['DecisionTree', 'tree_id, hazard_type, version, current, accuracy, last_updated, root_node_id'],
+    ['Incident', 'incident_id, type, severity, status, timestamp, resolution_path[], accuracy_score'],
+    ['SafetyRule', 'rule_id, description, regulation_ref, violation_conditions, severity, action_required'],
+    ['Procedure', 'procedure_id, title, hazard_types[], steps[], required_ppe[], version'],
+    ['SHELDRASession', 'session_id, worker_id, hazard_id, tree_id, messages[], outcome, accuracy_score, start_time, end_time'],
+    ['Zone', 'zone_id, name, type, hazard_level, required_ppe[], active_hazards[]'],
+    ['Equipment', 'equipment_id, name, type, status, last_inspection, maintenance_due, associated_hazards[]'],
+    ['Supervisor', 'supervisor_id, name, role, active, escalation_level'],
+]
+add_table(['Node Label', 'Key Properties'], nodes_schema)
+
+add_subsection_heading('11.3 Schema (Edges)')
+
+edges_schema = [
+    ['HAS_PROFILE', 'Worker \u2192 Worker', 'Links worker to their profile properties'],
+    ['GUIDED_BY', 'Worker \u2192 SHELDRASession', 'Records every SHELDRA coaching interaction with a worker'],
+    ['ABOUT', 'SHELDRASession \u2192 Hazard', 'Associates a coaching session with a specific hazard'],
+    ['RESOLVED_VIA', 'Incident \u2192 DecisionTree', 'Records which decision tree version was used for an incident'],
+    ['REQUIRES', 'Zone \u2192 SafetyRule', 'Safety rules that apply to a specific zone'],
+    ['VIOLATES', 'Observation \u2192 SafetyRule', 'Links a detected violation to the rule that was broken'],
+    ['TRIGGERED_BY', 'Incident \u2192 Observation', 'Root cause: which sensor reading or vision detection triggered this'],
+    ['LOCATED_IN', 'Worker/Equipment \u2192 Zone', 'Current location of an entity'],
+    ['MONITORED_BY', 'Zone \u2192 Camera/Sensor', 'Which monitoring devices cover this zone'],
+    ['MANAGES', 'Supervisor \u2192 Worker', 'Supervisor-worker reporting relationship'],
+    ['SIMILAR_TO', 'Incident \u2192 Incident', 'Similar incident based on graph edit distance or feature similarity'],
+]
+add_table(['Edge Type', 'Source \u2192 Target', 'Semantics'], edges_schema)
+
+add_subsection_heading('11.4 Key Queries')
+add_code("""
+// Find all workers in Zone A with their PPE compliance
+MATCH (w:Worker)-[:LOCATED_IN]->(z:Zone {zone_id: 'A'})
+RETURN w.worker_id, w.name, w.ppe_compliance_rate
+ORDER BY w.ppe_compliance_rate ASC
+
+// Root cause analysis: trace incident to its trigger
+MATCH path = (i:Incident {incident_id: $id})-[:TRIGGERED_BY*]->(obs)
+RETURN nodes(path)
+
+// Worker interaction history for personalization
+MATCH (w:Worker {worker_id: $id})-[:GUIDED_BY]->(s:SHELDRASession)
+RETURN s.hazard_id, s.outcome, s.accuracy_score, s.start_time
+ORDER BY s.start_time DESC
+LIMIT 20
+
+// Most effective decision tree for a hazard
+MATCH (i:Incident {hazard_type: $type})-[:RESOLVED_VIA]->(dt:DecisionTree)
+RETURN dt.tree_id, dt.version, avg(i.accuracy_score) as avg_accuracy
+ORDER BY avg_accuracy DESC
+LIMIT 1
+""")
+
+add_subsection_heading('11.5 Technology Choice')
+add_para(
+    'Neo4j was chosen over Amazon Neptune and ArangoDB because: (a) Cypher is the most '
+    'intuitive graph query language for developers, (b) Neo4j\'s property graph model maps '
+    'directly to industrial entities (nodes have rich properties, edges carry weight and '
+    'temporal metadata), (c) the Python driver (neo4j) is mature and well-documented, and '
+    '(d) Neo4j AuraDB provides managed cloud deployment. The tradeoff is that Neo4j is '
+    'not horizontally sharded by default; enterprise deployments require Neo4j Fabric.'
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 12. RETRIEVAL AUGMENTED GENERATION
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('12. Retrieval Augmented Generation', level=1)
+
+add_subsection_heading('12.1 Why')
+add_para(
+    'Large Language Models generate plausible but factually incorrect text (hallucination). '
+    'In industrial safety, a hallucinated procedure can cause injury. RAG grounds every '
+    'SHELDRA response in retrievable safety documentation, providing citations for every claim.'
+)
+
+add_subsection_heading('12.2 Architecture')
+add_code("""
+Document Source (PDF)
+    |
+    v
++------------------------------------+
+| Ingestion Pipeline                 |
+| pdfplumber -> text extraction      |
+| RecursiveCharacterTextSplitter     |
+| chunk_size=512, overlap=50         |
+| Preserves section headers, pages   |
++------------------------------------+
+    |
+    v
++------------------------------------+
+| Embedding                          |
+| E5-mistral-7b -> 4096-dim vector   |
+| ONNX Runtime (FP16 quantization)   |
+| Per chunk, stored in Qdrant        |
++------------------------------------+
+    |
+    v
++------------------------------------+
+| Qdrant Collection                  |
+| Hybrid: dense (cosine) + sparse    |
+| (BM25). Payload: doc_id, section,  |
+| page, chunk_index, source_file     |
++------------------------------------+
+    |
+    v
++------------------------------------+
+| Retrieval (per incoming query)     |
+| Query -> Qdrant hybrid search      |
+| Top-20 results -> Cross-encoder    |
+| Re-rank -> Top-3                   |
++------------------------------------+
+    |
+    v
++------------------------------------+
+| Context Assembly                   |
+| Retrieved chunks + source citations|
+| Injected into LLM prompt           |
++------------------------------------+
+    |
+    v
+LLM Core -> Generated Response with "[Source: OSHA 1910.134 Section 4.2]"
+""")
+
+add_subsection_heading('12.3 Retrieval Strategy')
+add_para(
+    'Hybrid search combines semantic similarity (dense vector search) with keyword matching '
+    '(sparse BM25). This is essential for industrial safety queries where exact terminology '
+    'matters: "OSHA 1910.134" must match the specific regulation number, not a semantically '
+    'similar phrase. Dense search captures conceptual queries like "what to do during a gas '
+    'leak." The cross-encoder re-ranker (a smaller BERT model) scores the top-20 results '
+    'and returns the top-3 most relevant chunks.'
+)
+
+add_subsection_heading('12.4 Citation Format')
+add_para(
+    'Every SHELDRA response that references procedure includes a citation block: "Per OSHA '
+    '1910.134 Section 4.2: \'Respirators must be fitted before entering confined spaces.\'" '
+    'If the retrieval confidence score is below 0.5, SHELDRA responds with: "I cannot find '
+    'a specific procedure for this situation. I recommend consulting your supervisor."'
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 13. DATA FLOW ARCHITECTURE
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('13. Data Flow Architecture', level=1)
+
+add_subsection_heading('13.1 Event Taxonomy')
+
+event_tax = [
+    ['sheldra.interactions', 'Chat messages, SHELDRA responses', 'API \u2192 Engine \u2192 API', 'Audit, training, tree improvement'],
+    ['vision.detections', 'PPE violations, zone encroachments, behavior alerts', 'VisionIntel \u2192 Kafka \u2192 Engine', 'SHELDRA feedback triggers'],
+    ['sensor.readings', 'Raw IoT telemetry (temp, vib, gas, noise)', 'Simulator/Sensors \u2192 Kafka \u2192 MonitorIntel', 'Anomaly detection input'],
+    ['system.alerts', 'Anomaly alerts, compound risk alerts, system health', 'MonitorIntel/Engine \u2192 Kafka \u2192 API', 'Dashboard display, SHELDRA awareness'],
+    ['decision.trees', 'Tree updates, version changes, accuracy scores', 'DecisionTree \u2192 Kafka \u2192 KG', 'Tree persistence, frontend updates'],
+    ['worker.profiles', 'Profile updates, learning speed changes, training scores', 'Engine \u2192 Kafka \u2192 KG', 'Personalization data durability'],
+    ['supervisor.actions', 'Overrides, acknowledgments, dismissals, escalations', 'API \u2192 Kafka \u2192 Engine', 'HITL audit trail'],
+]
+add_table(['Topic', 'Content', 'Flow', 'Purpose'], event_tax)
+
+add_subsection_heading('13.2 Message Schema (Avro)')
+add_code("""
+{
+  "namespace": "com.sheldra.event",
+  "type": "record",
+  "name": "SHELDRAEvent",
+  "fields": [
+    { "name": "event_id",         "type": "string" },
+    { "name": "event_type",       "type": "string" },
+    { "name": "trace_id",         "type": "string" },
+    { "name": "source_module",    "type": "string" },
+    { "name": "timestamp",        "type": "long"   },
+    { "name": "worker_id",        "type": ["null", "string"], "default": null },
+    { "name": "payload",          "type": "bytes"  },
+    { "name": "metadata",         "type": { "type": "map", "values": "string" } }
+  ]
+}
+""")
+
+add_subsection_heading('13.3 Event Flow for a Typical SHELDRA Interaction')
+add_code("""
+Worker: "What should I do about the vibration on machine #7?"
+    |
+    | 1. POST /api/v1/sheldra/chat
+    v
+API Layer -> validate auth -> get worker profile -> create trace_id
+    |
+    | 2. Route to EventOrchestrator
+    v
+Orchestrator:
+    |-- 3. MemoryManager.get_short_term(trace_id)  [Redis]
+    |-- 4. MemoryManager.get_long_term(worker_id)   [KG query]
+    |-- 5. PersonalizationEngine.load_profile(worker_id)
+    |-- 6. RAGEngine.retrieve("vibration machine #7 procedure")
+    |-- 7. KGManager.query("equipment status machine #7")
+    |-- 8. KGManager.query("recent incidents machine #7")
+    |
+    | 9. Assemble context -> LLM Core
+    v
+LLM Core:
+    |-- 10. Build prompt (system + profile + context + history)
+    |-- 11. Llama 3 inference -> structured response
+    |-- 12. Parse {message, tone, gesture, confidence, citations}
+    |
+    | 13. SafetyGuardrails.validate(response)
+    | 14. ExplainabilityEngine.record_trace(module_inputs, outputs)
+    | 15. MemoryManager.update_short_term(trace_id, conversation)
+    | 16. KGManager.create_session_node(worker_id, hazard, response)
+    |
+    | 17. Return response to API
+    v
+API Layer -> stream to client
+    |
+    | 18. SHELDRA avatar speaks, gestures, displays message
+    v
+Worker hears SHELDRA's response
+""")
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 14. DATABASE DESIGN
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('14. Database Design', level=1)
+
+add_subsection_heading('14.1 Polyglot Persistence Model')
+db_design = [
+    ['Neo4j', 'Graph', 'Entity relationships, worker profiles, incident graphs, decision trees, session logs', 'Multi-hop queries, root cause analysis, pattern matching', 'Temporal edges for point-in-time queries; query caching via Redis'],
+    ['Qdrant', 'Vector', 'Document embeddings for RAG, feature vectors for similarity search', 'Semantic search, hybrid (dense+sparse) retrieval', 'Payload filtering for metadata; quantization for memory efficiency'],
+    ['InfluxDB', 'Time-Series', 'IoT sensor readings, model inference metrics', 'Windowed aggregates, continuous queries, downsampling', 'Retention policies; 7-day raw, 1-year downsampled'],
+    ['PostgreSQL', 'Relational', 'Users, teams, auth tokens, configuration, audit log', 'Transactional CRUD, reporting, auth', 'Row-level security for multi-tenant isolation'],
+    ['Redis', 'Key-Value', 'Session state, conversation buffers, KG query cache, rate limiter counters', 'Sub-millisecond reads, Pub/Sub, TTL-based expiry', 'LRU eviction; persistence disabled (cache only)'],
+    ['MinIO', 'Object', 'Camera frames (transient), model artifacts, report PDFs, training data', 'Per-frame storage for incident evidence, batch processing', 'S3-compatible; lifecycle policies for automatic tiering'],
+]
+add_table(['Store', 'Type', 'Data', 'Access Pattern', 'Configuration'], db_design)
+
+add_subsection_heading('14.2 PostgreSQL Schema (Relational Data)')
+add_code("""
+-- Users and Authentication
+CREATE TABLE users (
+    user_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email       VARCHAR(255) UNIQUE NOT NULL,
+    role        VARCHAR(50) NOT NULL CHECK (role IN ('worker', 'supervisor', 'admin')),
+    password_hash VARCHAR(255) NOT NULL,
+    worker_id   VARCHAR(50) REFERENCES workers(worker_id),
+    created_at  TIMESTAMPTZ DEFAULT NOW(),
+    last_login  TIMESTAMPTZ
+);
+
+-- Audit Log (append-only)
+CREATE TABLE audit_log (
+    log_id      BIGSERIAL PRIMARY KEY,
+    trace_id    VARCHAR(64) NOT NULL,
+    event_type  VARCHAR(50) NOT NULL,
+    actor_id    VARCHAR(50),
+    action      VARCHAR(100) NOT NULL,
+    details     JSONB,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_audit_trace ON audit_log(trace_id);
+CREATE INDEX idx_audit_time ON audit_log(created_at DESC);
+
+-- Configuration
+CREATE TABLE config (
+    config_key   VARCHAR(100) PRIMARY KEY,
+    config_value JSONB NOT NULL,
+    updated_at   TIMESTAMPTZ DEFAULT NOW()
+);
+""")
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 15. API ARCHITECTURE
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('15. API Architecture', level=1)
+
+add_subsection_heading('15.1 Design Principles')
+add_bullet('Single entry point: All external interactions through /api/v1/sheldra/*')
+add_bullet('REST for synchronous operations (profile fetch, tree history)')
+add_bullet('WebSocket for streaming (SHELDRA responses, real-time updates)')
+add_bullet('Stateless API servers (session state in Redis, not in memory)')
+add_bullet('Versioned from day one (v1 prefix)')
+
+add_subsection_heading('15.2 Core Endpoints')
+api_eps = [
+    ['POST', '/api/v1/sheldra/chat', 'JSON: {worker_id, message, context, session_id}', 'Streaming response (SSE/WebSocket)', 'Primary SHELDRA interaction'],
+    ['WS', '/ws/sheldra/stream', 'Auth token', 'JSON messages', 'Real-time bidirectional streaming'],
+    ['GET', '/api/v1/sheldra/trace/{trace_id}', 'Path: trace_id', 'JSON: trace object', 'Decision trace retrieval'],
+    ['GET', '/api/v1/decision-trees/{hazard_id}', 'Path: hazard_id', 'JSON: current tree', 'Flow chart rendering'],
+    ['GET', '/api/v1/decision-trees/{id}/history', 'Path: tree_id', 'JSON: version array', 'Version comparison'],
+    ['GET', '/api/v1/workers/{id}/profile', 'Path: worker_id', 'JSON: profile', 'Personalization display'],
+    ['PUT', '/api/v1/workers/{id}/profile', 'JSON: profile fields', 'JSON: updated profile', 'Profile management'],
+    ['POST', '/api/v1/alerts/{id}/acknowledge', 'JSON: {supervisor_id}', 'JSON: {status}', 'HITL acknowledgment'],
+    ['POST', '/api/v1/alerts/{id}/override', 'JSON: {reason, action}', 'JSON: {status}', 'HITL override'],
+    ['GET', '/api/v1/analytics/accuracy', 'Query: ?hazard_type', 'JSON: accuracy metrics', 'Accuracy dashboard'],
+]
+add_table(['Method', 'Path', 'Request', 'Response', 'Purpose'], api_eps)
+
+add_subsection_heading('15.3 Example Request/Response')
+add_code("""
+POST /api/v1/sheldra/chat
+Authorization: Bearer <jwt>
+Content-Type: application/json
+
+{
+  "worker_id": "w3124",
+  "message": "What should I do about the vibration on machine #7?",
+  "context": {
+    "location": "Zone B",
+    "shift": "day",
+    "language": "en"
+  },
+  "session_id": "sess-abc-123"
+}
+
+Response (SSE stream):
+data: {"token": "I", "done": false}
+data: {"token": " see", "done": false}
+data: {"token": " that", "done": false}
+data: {"token": " machine", "done": false}
+data: {"token": " #7", "done": false}
+data: {"token": " has", "done": false}
+data: {"token": " elevated", "done": false}
+data: {"token": " vibration", "done": false}
+data: {"token": ". Let me check...", "done": false}
+...
+data: {
+  "done": true,
+  "full_response": "I see that machine #7 has elevated vibration readings. "
+                   "Per the maintenance procedure (Section 4.2): "
+                   "1. Power down the machine using the emergency stop. "
+                   "2. Contact maintenance team on channel 3. "
+                   "3. Do not restart until maintenance confirms safety.",
+  "tone": "calm",
+  "gesture": "pointing_left",
+  "confidence": 0.89,
+  "citations": [
+    {"doc": "Maintenance_SOP_v3.pdf", "section": "4.2", "page": 12}
+  ],
+  "trace_id": "trace-xyz-789"
+}
+""")
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 16. FRONTEND ARCHITECTURE
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('16. Frontend Architecture', level=1)
+
+add_subsection_heading('16.1 Directory Structure')
+add_code("""
+frontend/
+  app/                          # Next.js 14 App Router
+    layout.tsx                  # Root layout (theme provider, font)
+    page.tsx                    # SHELDRA Command Center (default view)
+    supervisor/                 # Supervisor console route
+    analytics/                  # Accuracy dashboard route
+    training/                   # VR training route
+    workers/[id]/               # Worker profile route
+  components/
+    sheldra/
+      Avatar.tsx                # R3F 3D avatar component
+      ConversationPanel.tsx     # Streaming message display
+      SpeechBubble.tsx          # Avatar speech bubble overlay
+      ContextPanel.tsx          # Current context display
+      ThinkingIndicator.tsx     # "SHELDRA is thinking..." animation
+    decision-tree/
+      FlowChart.tsx             # React Flow DAG renderer
+      NodeDetail.tsx            # Click-to-expand node detail
+      StepWalkthrough.tsx       # Step-by-step guided mode
+      VersionBadge.tsx          # Version indicator
+    dashboard/
+      Layout.tsx                # Three-column responsive layout
+      AlertQueue.tsx            # Supervisor alert list
+      InteractionFeed.tsx       # Live SHELDRA activity log
+      AccuracyChart.tsx         # Tree accuracy trend chart
+      WorkerCard.tsx            # Worker profile summary card
+    voice/
+      MicrophoneButton.tsx      # Push-to-talk button
+      VoiceWaveform.tsx         # Audio visualization
+      CaptionOverlay.tsx        # Text captions for audio
+    vr/
+      VRScene.tsx               # A-Frame / Three.js XR scene
+      VRHazardSimulation.tsx    # Hazard trigger in VR
+      VRScoreDisplay.tsx        # Training score overlay
+    shared/
+      WebSocketProvider.tsx     # WebSocket connection context
+      AuthProvider.tsx          # JWT auth context
+      ThemeProvider.tsx         # Dark/light mode
+  hooks/
+    useWebSocket.ts             # WebSocket connection hook
+    useSHELDRA.ts               # SHELDRA chat API hook
+    useWorkerProfile.ts         # Worker profile query hook
+    useDecisionTree.ts          # Decision tree query hook
+  lib/
+    api.ts                      # API client (fetch + WebSocket)
+    types.ts                    # TypeScript type definitions
+    constants.ts                # API URLs, config constants
+""")
+
+add_subsection_heading('16.2 Component Architecture')
+add_para(
+    'The frontend follows a presenter pattern: components render data but never compute or '
+    'transform it. All business logic resides in the SHELDRA Intelligence Engine. The '
+    'WebSocketProvider maintains a persistent connection to /ws/sheldra/stream and dispatches '
+    'events to registered components. The useSHELDRA hook encapsulates the chat API, '
+    'managing request state, streaming response parsing, and error recovery.'
+)
+
+add_subsection_heading('16.3 State Management')
+add_para(
+    'State is managed through React Context + SWR for cache synchronization. The WebSocket '
+    'Provider is the single source of truth for real-time state. Components subscribe to '
+    'event types (new_alert, tree_update, worker_status_change) and update local state '
+    'accordingly. There is no global state store (Redux, Zustand) because the component '
+    'tree is shallow (3 levels max) and data flows are unidirectional: WebSocket \u2192 '
+    'Provider \u2192 Hook \u2192 Component.'
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 17. SECURITY
+# ═══════════════════════════════════════════════════════════════════════════
+add_heading('17. Security', level=1)
+
+sec_items = [
+    ['Authentication', 'JWT-based. Tokens issued on login, valid for 8 hours (shift duration). Refresh tokens with 30-day validity for mobile apps.'],
+    ['Authorization', 'Role-based (worker, supervisor, admin). Workers can only read their own profile and interactions. Supervisors can read all profiles in their zone. Admins have full access.'],
+    ['Transport', 'TLS 1.3 for all HTTP and WebSocket connections. HSTS headers. Certificate auto-renewal via Let\'s Encrypt.'],
+    ['API Security', 'Rate limiting: 30 requests/second per user for chat endpoint. Input validation via Pydantic (type checking, length limits, injection prevention).'],
+    ['Audit', 'All HITL actions, profile changes, and tree updates are written to the append-only audit_log table. Audit log has its own database user with INSERT-only grants.'],
+    ['Data Privacy', 'Camera frames processed in memory; raw frames written to MinIO only for incident evidence (configurable, default off). Worker profiles contain only safety-relevant data (not HR data).'],
+    ['Dependency Scanning', 'GitHub Dependabot for vulnerability alerts. Weekly `npm audit` and `pip audit` in CI pipeline.'],
+]
+for name, desc in sec_items:
+    p = doc.add_paragraph()
+    r = p.add_run(name + ': ')
+    r.bold = True
     p.add_run(desc)
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 2. VISION STATEMENT
+# 18. DEPLOYMENT ARCHITECTURE
 # ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('2. Vision Statement', level=1)
+add_heading('18. Deployment Architecture', level=1)
 
+add_subsection_heading('18.1 Hackathon Deployment (Single Node)')
+add_code("""
++--------------------------------------------------------------+
+| Single Machine (16GB RAM, 4+ cores, optional NVIDIA GPU)     |
+|                                                              |
+| docker-compose.yml:                                          |
+|   - fastapi (sheldra api)                                    |
+|   - sheldra-engine (11 modules)                              |
+|   - nextjs (frontend + avatar)                               |
+|   - ollama (llama 3 8b)                                      |
+|   - zookeeper + kafka                                        |
+|   - neo4j                                                     |
+|   - qdrant                                                    |
+|   - influxdb                                                  |
+|   - postgres                                                  |
+|   - redis                                                     |
+|   - minio                                                     |
+|   - nginx (reverse proxy + ssl)                              |
++--------------------------------------------------------------+
+""")
+
+add_subsection_heading('18.2 Production Deployment')
+add_code("""
++--------------------------------------------------+
+| AWS Cloud                                         |
+|                                                   |
+| VPC                                               |
+| +--------------------------------------------+   |
+| | Public Subnet                               |   |
+| | CloudFront (CDN) -> ALB -> ECS Fargate      |   |
+| |   frontend (Next.js, 2x tasks, auto-scale)  |   |
+| +--------------------------------------------+   |
+|                                                   |
+| +--------------------------------------------+   |
+| | Private Subnet (App)                       |   |
+| | ECS Fargate:                                |   |
+| |   sheldra-api (FastAPI, 2x tasks)          |   |
+| |   sheldra-engine (4x tasks, CPU)           |   |
+| |   vision-inference (2x tasks, GPU if avail)|   |
+| |   monitor-inference (2x tasks, CPU)        |   |
+| |   decision-tree-worker (1x task, cron)     |   |
+| |   ollama (1x task, GPU if avail)           |   |
+| +--------------------------------------------+   |
+|                                                   |
+| +--------------------------------------------+   |
+| | Private Subnet (Data)                      |   |
+| | Amazon MSK (Kafka)                          |   |
+| | RDS PostgreSQL (Multi-AZ)                  |   |
+| | ElastiCache Redis (Cluster mode)           |   |
+| | Neo4j AuraDB (Managed)                     |   |
+| | Qdrant Cloud (Managed)                     |   |
+| | InfluxDB Cloud (Managed)                   |   |
+| | S3 (object storage)                        |   |
+| +--------------------------------------------+   |
++--------------------------------------------------+
+""")
+
+add_subsection_heading('18.3 CI/CD Pipeline')
 add_para(
-    '"An autonomous holographic AI safety coach that walks beside every worker, sees what '
-    'they see, knows what they know, and guides them through every hazard with personalized, '
-    'adaptive intelligence \u2014 powered by a living decision tree that learns from every '
-    'interaction, every sensor, every incident, updating in real time."'
+    'GitHub Actions workflow: On PR to main, run lint + typecheck + unit tests. On merge to '
+    'main, build Docker images, push to ECR, deploy to ECS Fargate (blue/green deployment). '
+    'Database migrations run as a separate step before new task set activates.'
 )
 
-add_para(
-    'SHELDRA is not a dashboard. SHELDRA is not a report. SHELDRA is a teammate \u2014 '
-    'one that never blinks, never forgets, never has a bad day, and always puts the '
-    'worker\u2019s safety first.'
-)
-
 # ═══════════════════════════════════════════════════════════════════════════
-# 3. UNIQUE VALUE PROPOSITION
+# 19. TECHNOLOGY STACK
 # ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('3. Unique Value Proposition', level=1)
+add_heading('19. Technology Stack', level=1)
 
-uvps = [
-    ('A Coach, Not a Dashboard',
-     'Every other industrial safety system is a screen to watch. SHELDRA is a presence '
-     'that guides, corrects, teaches, and reassures. Workers do not monitor SHELDRA \u2014 '
-     'SHELDRA watches over them. This flips the human-AI relationship from observation '
-     'to partnership.'),
-    ('Personalized at the Individual Level',
-     'SHELDRA adapts to each worker\u2019s experience, learning speed, language, and '
-     'emotional state. A novice gets step-by-step guidance. An expert gets a quick confirmation. '
-     'A stressed worker gets a calm, simplified voice. No two workers experience the same '
-     'SHELDRA.'),
-    ('Living Decision Trees That Improve Every 5 Minutes',
-     'Static checklists kill. Our Decision Tree algorithm generates dynamic flow charts '
-     'that evolve with every incident. If a resolution path fails, the tree learns, prunes '
-     'the branch, and proposes a better one. Updates every 5 minutes. Accuracy is '
-     'measured, displayed, and improved continuously.'),
-    ('Holographic by Design, Multi-Modal by Necessity',
-     'SHELDRA manifests as a 3D holographic avatar \u2014 visually present, spatially aware, '
-     'emotionally intelligent. She speaks, gestures, points, and demonstrates. On mobile, '
-     'desktop, AR glasses, or VR headsets. The interface adapts to the environment.'),
-    ('Full-Stack Awareness',
-     'SHELDRA sees through cameras (PPE detection, behavior analysis), feels through '
-     'sensors (temperature, vibration, gas), reads through documents (safety manuals via RAG), '
-     'and remembers through the Knowledge Graph (every interaction, every worker, every '
-     'incident). No other safety AI has this complete situational awareness.'),
+stack = [
+    ['LLM Reasoning', 'Llama 3 8B (Meta)', 'Open-weight, offline-capable, 8B fits single GPU', 'Ollama (local) -> Together AI (prod)'],
+    ['Text Embeddings', 'E5-mistral-7b (Microsoft)', 'Best-in-class quality, 4096-dim, multilingual', 'ONNX Runtime (FP16 quantized)'],
+    ['Object Detection', 'YOLOv8n/s (Ultralytics)', 'Real-time, 6-class PPE, fine-tunable', 'ONNX Runtime (CPU/GPU)'],
+    ['Pose Estimation', 'RTMPose-m (OpenMMLab)', '17-keypoint, 5ms/person on GPU', 'ONNX Runtime'],
+    ['Time-Series', 'TimesNet (Microsoft Research)', 'ICLR 2023 Best Paper, multi-period capture', 'ONNX Runtime'],
+    ['API Framework', 'FastAPI (Python)', 'Async-native, auto-docs, Pydantic validation', 'Uvicorn + Gunicorn'],
+    ['Frontend', 'Next.js 14 + TypeScript', 'SSR/SSG, React Server Components, App Router', 'Vercel / ECS'],
+    ['3D Rendering', 'React Three Fiber + Three.js', 'Declarative 3D in React, WebGL', 'Browser native'],
+    ['VR', 'A-Frame (Mozilla)', 'WebXR, no app store, desktop fallback', 'Browser native'],
+    ['Message Broker', 'Apache Kafka + Avro', 'Durable, partitioned, replayable', 'Confluent Cloud / MSK'],
+    ['Stream Processing', 'KSQL / Flink', 'SQL-level CEP; Flink for complex patterns', 'Confluent Cloud'],
+    ['Graph Database', 'Neo4j + Cypher', 'Mature, ACID, Python driver', 'Neo4j AuraDB'],
+    ['Vector Database', 'Qdrant', 'Fastest (Rust), hybrid search, payload filtering', 'Qdrant Cloud'],
+    ['Time-Series DB', 'InfluxDB OSS v2', 'Purpose-built, downsampling, continuous queries', 'InfluxDB Cloud'],
+    ['Cache', 'Redis', 'Sub-ms reads, Pub/Sub, TTL', 'ElastiCache'],
+    ['Object Storage', 'MinIO / S3', 'S3-compatible', 'Self-hosted -> S3'],
+    ['LLM Serving', 'Ollama -> Together AI', 'Local for dev, cloud for prod', 'Together AI / Bedrock'],
+    ['CI/CD', 'GitHub Actions', 'Free for public repos, matrix builds', 'GitHub'],
+    ['Infra as Code', 'Terraform (HCL)', 'Reproducible, reviewable', 'Terraform Cloud'],
+    ['Monitoring', 'Grafana + Prometheus + Loki', 'Metrics + logs + traces', 'Grafana Cloud'],
 ]
-
-for name, desc in uvps:
-    p = doc.add_paragraph()
-    run = p.add_run(f'{name}: ')
-    run.bold = True
-    p.add_run(desc)
+add_table(['Category', 'Technology', 'Justification', 'Production Service'], stack)
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 4. SHELDRA
+# 20. AI MODELS
 # ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('4. SHELDRA \u2014 The Holographic AI Safety Coach', level=1)
-
-add_para(
-    'SHELDRA is the central interface of the platform \u2014 an adaptive, personalized, '
-    'holographic AI assistant that workers interact with throughout their shift. She is '
-    'not a chatbot. She is a spatial, emotional, multi-modal presence.'
-)
-
-add_heading('4.1 Core Capabilities', level=2)
-
-sheldra_caps = [
-    ['Proactive Guidance', 'SHELDRA monitors the environment and proactively speaks up: '
-     '"Watch your step \u2014 there is an oil spill in aisle 3."', 'CV + IoT + KG'],
-    ['Corrective Feedback', 'When a safety violation is detected, SHELDRA intervenes with '
-     'a specific, actionable correction: "Your safety glasses are on top of your helmet. '
-     'Please adjust them before entering Zone A."', 'Vision Agent + Profile'],
-    ['Procedural Walkthrough', 'For complex or rare tasks, SHELDRA provides step-by-step '
-     'guidance, pausing at each step for confirmation.', 'RAG + Decision Tree'],
-    ['Hazard Q&A', 'Workers can ask SHELDRA anything: "What is the protocol for hydrogen '
-     'sulfide detection?" SHELDRA answers with citations from safety manuals.', 'RAG'],
-    ['Emergency Response', 'During an incident, SHELDRA switches to emergency mode: '
-     'clear, authoritative, time-stamped evacuation instructions.', 'Decision Tree + Emergency'],
-    ['Training & Simulation', 'In VR mode, SHELDRA becomes a training instructor, '
-     'scoring worker responses and adapting future training.', 'VR Scene + Profile'],
-    ['Shift Handover', 'At shift change, SHELDRA generates a summary for the incoming '
-     'team: active hazards, worker status, unresolved issues.', 'KG + Profile'],
-]
-add_table(['Capability', 'Description', 'Powered By'], sheldra_caps)
-
-add_heading('4.2 SHELDRA Personality & Behavior', level=2)
-add_para(
-    'SHELDRA\u2019s personality is designed for industrial environments:\n'
-    '- Calm authority: Never alarms unnecessarily. Communicates clearly even in emergencies.\n'
-    '- Encouraging: Praises correct behavior. "Great job locking out that equipment."\n'
-    '- Patience: Repeats and rephrases if a worker does not understand.\n'
-    '- Adaptability: Switches tone based on worker emotional state (stressed = slower, simpler).\n'
-    '- Memory: Reminds workers of past coaching moments. "Remember last week\u2019s training '
-    'on confined space entry?"'
-)
-
-add_heading('4.3 Holographic Avatar Design', level=2)
-add_para(
-    'The SHELDRA avatar is rendered in real-time 3D using React Three Fiber:\n'
-    '- Full-body presence with idle animation (gentle floating, scanning environment)\n'
-    '- Gesture system: pointing at hazards, nodding in acknowledgment, open-palm for warnings\n'
-    '- Lip-sync: synchronized to TTS audio output via waveform analysis\n'
-    '- Holographic shader: scan-line overlay, subtle glow, translucent effect\n'
-    '- Responsive: resizes from full-screen desktop to mobile thumbnail\n'
-    '- Environmental awareness: avatar lighting matches factory scene\n\n'
-    'Fallback for hackathon: 2D animated character with same gesture/vocal personality, '
-    'rendered via Lottie/Bodymovin if 3D performance is insufficient.'
-)
-
-add_heading('4.4 Interaction Modalities', level=2)
-add_para(
-    '- Voice: Speak to SHELDRA (Whisper STT) / SHELDRA speaks back (ElevenLabs/Coqui TTS)\n'
-    '- Text: Type to SHELDRA in chat panel\n'
-    '- Visual: SHELDRA highlights hazards on screen / in AR overlay\n'
-    '- Gesture (future): Wave to summon, point to direct attention\n'
-    '- Multi-modal: Combine voice + visual for complex instructions'
-)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 5. DECISION TREE ALGORITHM
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('5. Decision Tree Algorithm', level=1)
-
-add_para(
-    'The Decision Tree Engine is the second primary pillar. It replaces static safety '
-    'checklists with living, learning flow charts that evolve with every incident. '
-    'Every SHELDRA interaction, every sensor reading, every supervisor override feeds '
-    'back into the tree, making it more accurate over time.'
-)
-
-add_heading('5.1 Data Model', level=2)
-add_para(
-    'Each decision tree is a directed acyclic graph (DAG):\n\n'
-    '{\n'
-    '  "tree_id": "gas-leak-001",\n'
-    '  "hazard_type": "gas_leak",\n'
-    '  "version": 7,\n'
-    '  "last_updated": "2026-07-07T14:30:00Z",\n'
-    '  "overall_accuracy": 0.89,\n'
-    '  "nodes": [\n'
-    '    {\n'
-    '      "id": "node-001",\n'
-    '      "type": "question | action | condition | resolution",\n'
-    '      "question": "Is the gas sensor reading above 50ppm?",\n'
-    '      "conditions": { "sensor.gas_ppm": { "gt": 50 } },\n'
-    '      "branches": [\n'
-    '        { "to": "node-002", "label": "Yes", "action": "evacuate_zone" },\n'
-    '        { "to": "node-003", "label": "No", "action": "monitor" }\n'
-    '      ],\n'
-    '      "accuracy": 0.92,\n'
-    '      "times_taken": 47\n'
-    '    }\n'
-    '  ],\n'
-    '  "root_id": "node-001"\n'
-    '}'
-)
-
-add_heading('5.2 Tree Generation', level=2)
-add_para(
-    'Trees are generated from three sources:\n'
-    '1. Knowledge Graph: Hazard taxonomy nodes link to safety rules, procedures, and '
-    'historical incidents. These define the initial tree structure.\n'
-    '2. Safety Documents (RAG): Procedure steps are parsed into action nodes.\n'
-    '3. Historical Incidents: Past resolution paths are extracted as branch patterns.\n\n'
-    'The generator combines these into a coherent tree, validates it for completeness '
-    '(all branches terminate in resolution or escalation), and assigns initial confidence '
-    'scores based on source reliability.'
-)
-
-add_heading('5.3 The 5-Minute Update Cycle', level=2)
-add_para(
-    'This is the core differentiator. Every 5 minutes:\n\n'
-    '1. Collect outcomes: Gather all hazard resolutions from the last 5 minutes \u2014 '
-    'both successful and failed.\n'
-    '2. Score each branch: For each path taken, compare predicted outcome vs actual outcome. '
-    'Update branch accuracy scores.\n'
-    '3. Prune low-accuracy branches: Any branch with < 50% accuracy over last 10 evaluations '
-    'is flagged for pruning. If accuracy does not recover in 3 cycles, it is removed.\n'
-    '4. Propose new branches: Analyze failed resolutions for patterns. If a common '
-    'alternative path emerges, propose it as a new branch.\n'
-    '5. Version the tree: Each update creates a new tree version. Old trees are retained '
-    'for A/B testing and rollback.\n'
-    '6. Notify SHELDRA: "Decision Tree #7 updated to version 8 \u2014 new branch added '
-    'for gas leak escalation."'
-)
-
-add_heading('5.4 Flow Chart Examples', level=2)
-
-add_para('Example 1: PPE Violation Resolution', bold=True)
-add_para(
-    'Root: Worker entered Zone A without safety glasses\n'
-    '\u251c\u2500 Is worker in a designated PPE-required zone?\n'
-    '\u2502   \u251c\u2500 Yes \u2192 Notify worker + display nearest PPE station\n'
-    '\u2502   \u2502   \u251c\u2500 Worker complies? \u2192 Log compliance + praise\n'
-    '\u2502   \u2502   \u2514\u2500 Worker does not comply? \u2192 Escalate to supervisor\n'
-    '\u2502   \u2514\u2500 No \u2192 No action needed (log entry)\n'
-    '\u2514\u2500 Does worker have a medical exemption?\n'
-    '    \u251c\u2500 Yes \u2192 Verify exemption in KG \u2192 Log + allow\n'
-    '    \u2514\u2500 No \u2192 Escalate to safety officer'
-)
-
-add_para('Example 2: Gas Leak Response', bold=True)
-add_para(
-    'Root: Gas sensor anomaly detected in Zone B\n'
-    '\u251c\u2500 Gas level > 50ppm?\n'
-    '\u2502   \u251c\u2500 Yes \u2192 Initiate zone evacuation\n'
-    '\u2502   \u2502   \u251c\u2500 All workers evacuated? \u2192 Seal zone + alert HAZMAT\n'
-    '\u2502   \u2502   \u2514\u2500 Workers remaining? \u2192 Alert rescue team\n'
-    '\u2502   \u2514\u2500 No \u2192 Increase monitoring frequency\n'
-    '\u2502       \u251c\u2500 Gas stabilizes? \u2192 Resume normal ops\n'
-    '\u2502       \u2514\u2500 Gas rising? \u2192 Re-evaluate (loop to root)\n'
-    '\u2514\u2500 Is gas source identified?\n'
-    '    \u251c\u2500 Yes \u2192 Dispatch maintenance team\n'
-    '    \u2514\u2500 No \u2192 Initiate source search protocol'
-)
-
-add_heading('5.5 Accuracy Evaluation', level=2)
-add_para(
-    'Every hazard resolution is scored:\n'
-    '- Success: Hazard resolved correctly, no injuries, no escalation needed. Score: 1.0\n'
-    '- Partial: Hazard resolved but with delay or confusion. Score: 0.5\n'
-    '- Failure: Escalation required, incorrect procedure followed. Score: 0.0\n\n'
-    'Accuracy for a node = (sum of scores) / (number of times taken) over rolling 10-trial '
-    'window. Overall tree accuracy = average of all leaf node accuracies. Displayed in '
-    'real-time on the dashboard.'
-)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 6. SYSTEM ARCHITECTURE OVERVIEW
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('6. System Architecture Overview', level=1)
-
-add_para(
-    'The architecture is SHELDRA-centric. Every component exists to feed SHELDRA\u2019s '
-    'awareness, power the Decision Tree, or deliver the holographic experience.'
-)
-
-add_para(
-    'Layer 1 \u2014 Edge & Sensor Layer\n'
-    'Cameras (RTSP), IoT sensors (temperature, vibration, gas, noise, humidity), '
-    'edge gateways with lightweight preprocessing. Workers can also interact via '
-    'mobile devices with AR capabilities.\n\n'
-    'Layer 2 \u2014 Ingestion & Streaming Layer\n'
-    'Apache Kafka as the nervous system. Topics: sheldra.interactions, decision.trees, '
-    'sensor.readings, vision.events, worker.profiles, system.alerts. Schema Registry '
-    'for contract enforcement.\n\n'
-    'Layer 3 \u2014 SHELDRA Intelligence Layer\n'
-    'The brain. Contains: SHELDRA Core AI (LLM + Personalization Engine), Decision Tree '
-    'Engine (generator + updater + scorer), Multi-Agent System (feeding context), '
-    'Knowledge Graph (worker profiles + hazard taxonomy), RAG Engine (safety document '
-    'grounding).\n\n'
-    'Layer 4 \u2014 SHELDRA Presentation Layer\n'
-    'Next.js dashboard with Three.js holographic avatar, WebSocket real-time streaming, '
-    'voice I/O (STT/TTS), Decision Tree flow chart visualization, VR training scenes.\n\n'
-    'Layer 5 \u2014 Human-in-the-Loop Layer\n'
-    'Supervisor console for monitoring SHELDRA interactions, overriding recommendations, '
-    'audit trails, shift handover briefings.'
-)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 7. MULTI-AGENT ARCHITECTURE
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('7. Multi-Agent Architecture (Supporting SHELDRA)', level=1)
-
-add_para(
-    'The multi-agent system exists to feed SHELDRA\u2019s situational awareness. Each agent '
-    'is a specialized sensor-to-meaning pipeline that converts raw observations into '
-    'structured context that SHELDRA can reason over.'
-)
-
-agents = [
-    ['Orchestrator', 'B', 'Central state machine. Routes all observations to SHELDRA\u2019s '
-     'context assembly. Manages incident lifecycle. The bridge between raw data and '
-     'SHELDRA\u2019s awareness.'],
-    ['Vision Agent', 'A', 'Processes camera frames (YOLOv8). Detects PPE compliance, zone '
-     'encroachment, unsafe behaviors. Outputs structured observations that trigger '
-     'SHELDRA\u2019s corrective feedback.'],
-    ['Monitoring Agent', 'A', 'Ingests IoT sensor streams. Runs TimesNet anomaly detection. '
-     'Anomaly scores feed into the Decision Tree engine as hazard triggers.'],
-    ['Compliance Agent', 'B', 'Queries Knowledge Graph for applicable safety rules given '
-     'current context. Provides SHELDRA with regulatory grounding for her guidance.'],
-    ['RAG Agent', 'A/B', 'Retrieves relevant safety procedures from vector store. Provides '
-     'citation-anchored knowledge for SHELDRA\u2019s responses. Enables "Show me the '
-     'regulation" feature.'],
-    ['Explanation Agent', 'A', 'Collects decision traces. Enables SHELDRA to answer "Why '
-     'did you suggest that?" with a complete evidence chain.'],
-]
-add_table(['Agent', 'Owner', 'Role in SHELDRA Ecosystem'], agents)
-
-add_heading('7.1 SHELDRA Context Assembly Flow', level=2)
-add_para(
-    '1. Observations arrive from Vision + Monitoring Agents\n'
-    '2. Orchestrator queries Knowledge Graph for context: Who is this worker? What zone? '
-    'What equipment? Current risk level?\n'
-    '3. Compliance Agent cross-references observations against safety rules\n'
-    '4. RAG Agent retrieves relevant procedures\n'
-    '5. All context is assembled into SHELDRA\u2019s prompt: {worker_profile, observations, '
-    'rules, procedures, history, emotional_state}\n'
-    '6. SHELDRA generates response with personalized tone + content depth\n'
-    '7. Decision Tree is updated with the interaction outcome\n'
-    '8. Explanation Agent logs the full trace'
-)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 8. SHELDRA AI PIPELINE
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('8. SHELDRA AI Pipeline', level=1)
-
-add_para(
-    'The SHELDRA AI pipeline transforms raw context into personalized, grounded, '
-    'emotionally-aware coaching responses.'
-)
-
-add_heading('8.1 Pipeline Stages', level=2)
-pipeline_stages = [
-    ['Context Assembly', 'Collect all observations from agents + KG. Build unified context object.', 'Orchestrator Agent'],
-    ['Profile Augmentation', 'Retrieve worker profile. Adjust prompt parameters based on experience, language, learning speed, emotional state.', 'Personalization Engine'],
-    ['RAG Retrieval', 'Query vector store for relevant safety procedures. Filter and rank by relevance to current context.', 'RAG Agent'],
-    ['Prompt Construction', 'Assemble system prompt with SHELDRA persona, context, profile, and retrieved knowledge.', 'SHELDRA Core'],
-    ['LLM Generation', 'Generate response via Llama 3 8B (streaming). Include structured fields: {message, tone, gesture, confidence, citations}.', 'LLM (Ollama/Together)'],
-    ['Response Post-Processing', 'Parse structured response. Validate against safety guardrails. Extract gesture/tone commands.', 'SHELDRA Core'],
-    ['TTS + Lip-Sync', 'Convert text to speech (ElevenLabs/Coqui). Generate lip-sync animation data.', 'Voice Pipeline'],
-    ['Avatar Rendering', 'Animate SHELDRA avatar with speech, gesture, and facial expression.', 'R3F Avatar'],
-]
-add_table(['Stage', 'Description', 'Component'], pipeline_stages)
-
-add_heading('8.2 Guardrails & Safety', level=2)
-add_para(
-    'SHELDRA operates under strict behavioral constraints:\n'
-    '- Never contradict a safety procedure directly (escalate to supervisor instead)\n'
-    '- Always provide confidence level for uncertain guidance\n'
-    '- Never dismiss a worker\u2019s concern (redirect to supervisor if needed)\n'
-    '- Always cite sources for procedural guidance\n'
-    '- Switch to emergency mode (abbreviated, authoritative) when risk score > 0.8\n'
-    '- Log all interactions for audit'
-)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 9. PERSONALIZATION ENGINE
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('9. Personalization Engine', level=1)
-
-add_para(
-    'SHELDRA is not one AI \u2014 she is a different AI for every worker. The personalization '
-    'engine ensures that each worker receives guidance tailored to their individual profile.'
-)
-
-add_heading('9.1 Worker Profile Schema', level=2)
-
-profile_fields = [
-    ['worker_id', 'string', 'Unique identifier'],
-    ['name', 'string', 'Worker display name'],
-    ['role', 'string', 'Job title / role'],
-    ['experience_level', 'enum', 'novice | experienced | expert'],
-    ['learning_speed', 'float', '0.0 (slow) to 1.0 (fast). Inferred from interaction patterns.'],
-    ['language', 'string', 'en | es | zh (ISO code)'],
-    ['certifications', 'string[]', 'List of safety certifications'],
-    ['incident_history', 'object[]', 'Past incidents involved in'],
-    ['interaction_history', 'object[]', 'Past SHELDRA coaching moments'],
-    ['emotional_state', 'object', 'Current estimated stress/fatigue level'],
-    ['training_completed', 'object[]', 'VR training modules completed + scores'],
-    ['ppe_compliance_rate', 'float', '0.0-1.0 rolling 30-day compliance'],
-]
-add_table(['Field', 'Type', 'Description'], profile_fields)
-
-add_heading('9.2 Adaptation Dimensions', level=2)
-adaptations = [
-    ['Content Depth', 'Novice: Step-by-step instructions with rationale. Experienced: '
-     'Brief confirmation with key points. Expert: Acknowledgment + request for situation report.'],
-    ['Vocabulary Complexity', 'Adapt terminology to worker expertise. Novice: "Put on your '
-     'helmet." Expert: "Verify your PPE before entering the restricted zone."'],
-    ['Speech Rate', 'Slower for novice/high-stress. Normal for experienced/calm.'],
-    ['Tone', 'Stressed: Calm, reassuring, simple sentences. Normal: Professional, encouraging. '
-     'Urgent: Clear, direct, time-stamped.'],
-    ['Feedback Style', 'Novice: Gentle + educational. Experienced: Direct + corrective. '
-     'Expert: Brief + respectful.'],
-    ['Language', 'Detect from profile. All responses in worker\u2019s preferred language.'],
-]
-add_table(['Dimension', 'Adaptation Logic'], adaptations)
-
-add_heading('9.3 Learning Speed Detection', level=2)
-add_para(
-    'SHELDRA infers learning speed from:\n'
-    '- Time to acknowledge/respond to instructions\n'
-    '- Number of follow-up questions asked\n'
-    '- Repetition of same safety violation\n'
-    '- VR training performance (reaction time, error rate)\n'
-    '- Supervisor feedback (manual rating)\n\n'
-    'Learning speed score (0-1) adjusts how much detail SHELDRA provides and how quickly '
-    'she progresses through multi-step procedures.'
-)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 10. COMPUTER VISION PIPELINE
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('10. Computer Vision Pipeline (SHELDRA\u2019s Eyes)', level=1)
-
-add_para(
-    'The CV pipeline provides SHELDRA with visual awareness \u2014 the ability to see '
-    'what workers are doing, what they are wearing, and what hazards are present.'
-)
-
-vision_models = [
-    ['PPE Detection', 'YOLOv8n', '6 classes: helmet, vest, gloves, goggles, harness, safety shoes',
-     'SHELDRA corrective feedback: "Your goggles are on your forehead, not your eyes."'],
-    ['Person Detection', 'YOLOv8s + ByteTrack', 'Track IDs for persistent worker identification',
-     'SHELDRA addressing specific workers: "Worker #3124, please..."'],
-    ['Zone Encroachment', 'Polygon ROI + IoU', 'Person bbox vs. restricted zone overlap',
-     'SHELDRA redirection: "This area requires confined space certification."'],
-    ['Pose Estimation', 'RTMPose', '17-keypoint pose for behavior analysis',
-     'SHELDRA ergonomic coaching: "Bend your knees, not your back."'],
-    ['Fall Detection', 'Pose + velocity analysis', 'Sudden keypoint descent detection',
-     'SHELDRA emergency: "Worker down in Zone A3 \u2014 dispatching assistance."'],
-]
-add_table(['Capability', 'Model', 'Approach', 'SHELDRA Integration'], vision_models)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 11. TIME-SERIES PREDICTION MODELS
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('11. Time-Series Prediction Models', level=1)
-
-add_para(
-    'Time-series anomaly detection feeds the Decision Tree engine. When an anomaly is '
-    'detected, the Decision Tree generates or selects a hazard resolution flow chart '
-    'for SHELDRA to execute.'
-)
-
-ts_details = [
-    ['TimesNet (Microsoft Research)', 'Primary anomaly detection',
-     'Transforms 1D time-series into 2D tensors via FFT period detection. Captures '
-     'multi-periodic patterns (shift cycles, machine cycles, seasonal variations). '
-     'ICLR 2023 Best Paper.'],
-    ['PatchTST (Princeton/Google)', 'Secondary / backup',
-     'Self-supervised pretraining on time-series patches. Handles missing data. '
-     'Strong on long-horizon anomaly forecasting.'],
-    ['Anomaly Scoring', 'Ensemble: TimesNet + Isolation Forest',
-     'TimesNet for complex patterns, Isolation Forest for fast baseline. '
-     'Weights adjust based on recent precision/recall.'],
-    ['Sensor Fusion Strategy', 'Weighted compound anomaly index',
-     'Vibration (0.4) + Temperature (0.3) + Gas (0.3). Prevents single-sensor false '
-     'positives from triggering unnecessary Decision Tree escalation.'],
-]
-add_table(['Model', 'Role', 'Details'], ts_details)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 12. KNOWLEDGE GRAPH DESIGN
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('12. Knowledge Graph Design', level=1)
-
-add_para(
-    'The Knowledge Graph serves two primary purposes: (1) worker profile storage and '
-    'personalization, and (2) hazard taxonomy for Decision Tree generation.'
-)
-
-add_heading('12.1 Node Types', level=2)
-
-nodes = [
-    ['Worker', 'Core profile + preferences + learning state', 'Personalization engine'],
-    ['Hazard', 'Hazard type, severity, frequency, related trees', 'Decision Tree generation'],
-    ['DecisionTree', 'Tree ID, version, accuracy, last_updated', 'Decision Tree Engine'],
-    ['SafetyRule', 'Rule description, regulation reference, conditions', 'Compliance Agent'],
-    ['Procedure', 'Steps, applicable hazards, required PPE', 'RAG grounding'],
-    ['Incident', 'Timeline, resolution path, outcome, accuracy score', 'Tree improvement'],
-    ['SHELDRASession', 'Interaction log: query, response, worker state, outcome', 'Audit + learning'],
-    ['Zone', 'Type, hazard level, required PPE, active hazards', 'Context awareness'],
-    ['Equipment', 'Status, maintenance, last inspection, associated hazards', 'Context awareness'],
-]
-add_table(['Node', 'Content', 'Used By'], nodes)
-
-add_heading('12.2 Edge Types', level=2)
-edges = [
-    ['HAS_PROFILE', 'Worker \u2192 Profile', 'Links worker to their personalization data'],
-    ['GUIDED_BY', 'Worker \u2192 SHELDRASession', 'Records every coaching interaction'],
-    ['ABOUT', 'SHELDRASession \u2192 Hazard', 'What hazard was the coaching about'],
-    ['RESOLVED_VIA', 'Incident \u2192 DecisionTree', 'Which tree was used for resolution'],
-    ['REQUIRES', 'Zone \u2192 SafetyRule', 'Rules applicable to a zone'],
-    ['TRIGGERED_BY', 'Incident \u2192 Sensor/Observation', 'Root cause link'],
-    ['HAS_VERSION', 'DecisionTree \u2192 TreeVersion', 'Version history with accuracy scores'],
-]
-add_table(['Edge', 'Source \u2192 Target', 'Purpose'], edges)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 13. RAG ARCHITECTURE
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('13. RAG Architecture', level=1)
-
-add_para(
-    'The RAG pipeline grounds everything SHELDRA says in verifiable safety documentation. '
-    'When SHELDRA gives procedural guidance, she cites her sources.'
-)
-
-add_para(
-    'Document Sources:\n'
-    '- Safety manuals (PDF): Step-by-step equipment procedures\n'
-    '- SOP documents: Standard operating procedures per zone\n'
-    '- Incident reports: Historical incidents with root cause + resolution\n'
-    '- Regulatory documents: OSHA/ISO guidelines\n'
-    '- Equipment datasheets: Manufacturer safety specifications\n\n'
-    'Pipeline: PDF \u2192 Chunking (512 chars, 50 overlap) \u2192 Embedding (E5-mistral-7b) '
-    '\u2192 Qdrant (hybrid search: dense + BM25)\n\n'
-    'Retrieval: Query \u2192 Query expansion \u2192 Hybrid search \u2192 Cross-encoder re-ranking '
-    '(top 3) \u2192 Context assembly \u2192 LLM generation\n\n'
-    'Every response includes: answer text, confidence score, source citations (document, '
-    'section, page). If retrieval confidence < 0.5, SHELDRA says "I am not sure. Let me '
-    'connect you with a supervisor."'
-)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 14. DIGITAL TWIN ARCHITECTURE
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('14. Digital Twin Architecture', level=1)
-
-add_para(
-    'The Digital Twin provides spatial context for SHELDRA and a visual representation '
-    'of the factory floor for supervisors. SHELDRA appears as a floating avatar marker '
-    'in the 3D scene, showing her current position and focus.'
-)
-
-add_para(
-    'Three.js / React Three Fiber \u2190 WebSocket (state sync) \u2190 Digital Twin Engine '
-    '(Node.js) \u2190 Knowledge Graph + Agent Events\n\n'
-    'Visual elements:\n'
-    '- Factory floor plan with equipment 3D models\n'
-    '- SHELDRA avatar marker (floating indicator showing her current focus area)\n'
-    '- Worker position indicators (colored by PPE compliance)\n'
-    '- Active hazard overlays (pulsing red zones)\n'
-    '- Decision Tree overlay (current tree path highlighted on the scene)\n'
-    '- Camera frustum visualization (what SHELDRA is currently "seeing")\n'
-    '- Time scrubber: rewind and replay SHELDRA interactions'
-)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 15. DATA INGESTION PIPELINE
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('15. Data Ingestion Pipeline', level=1)
-
-ingestion = [
-    ['Kafka Topics', 'sheldra.interactions, decision.trees, sensor.readings, vision.events, worker.profiles, system.alerts', 'Typed topics with Schema Registry (Avro).'],
-    ['IoT Simulator', 'Python script generating realistic sensor patterns with injected anomalies every 5-10 min', 'Synthetic data for demo with controllable anomaly injection.'],
-    ['Video Frame Producer', 'FFmpeg-based RTSP frame capture at configurable FPS', 'Frame metadata: camera_id, timestamp, zone mapping.'],
-    ['Stream Processing', 'KSQL for windowed aggregates, Flink for CEP (complex event processing)', '5-min rolling windows for Decision Tree update feed.'],
-    ['Object Storage', 'MinIO for frames, model artifacts, incident report PDFs', 'S3-compatible API for easy cloud migration.'],
-]
-add_table(['Component', 'Description', 'Details'], ingestion)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 16. GRAPH AI OPPORTUNITIES
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('16. Graph AI Opportunities', level=1)
-
-add_para(
-    'The Knowledge Graph enables several AI capabilities that directly enhance SHELDRA '
-    'and the Decision Tree:'
-)
-
-graph_ai = [
-    ['Worker Similarity Clustering', 'Find workers with similar profiles and incident patterns. '
-     'SHELDRA can say: "Workers with your profile have most often struggled with confined '
-     'space procedure. May I walk you through it?"'],
-    ['Hazard Propagation Prediction', 'Graph traversal predicts which zones are at highest risk '
-     'of incident propagation. Decision Tree pre-positions response plans.'],
-    ['Personalized Training Recommendations', 'Based on incident graph + worker profile, '
-     'recommend specific VR training modules. "Your last three near-misses involved lockout/'
-     'tagout. Would you like to run the LOTO VR simulation?"'],
-    ['Decision Tree Cross-Pollination', 'Similar hazards share tree branches. When a tree '
-     'improves for Gas Leak, related trees (Chemical Spill, Fume Release) inherit updates.'],
-]
-for name, desc in graph_ai:
-    p = doc.add_paragraph()
-    run = p.add_run(f'{name}: ')
-    run.bold = True
-    p.add_run(desc)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 17. EXPLAINABLE AI LAYER
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('17. Explainable AI Layer', level=1)
-
-add_para(
-    'SHELDRA can explain every decision she makes. This is critical for trust, audit, '
-    'and regulatory compliance.'
-)
-
-xai_types = [
-    ['SHELDRA Decision Trace', 'Timeline: what SHELDRA observed, what she considered, '
-     'what she decided. Displayed as a DAG in the SHELDRA info panel.'],
-    ['Natural Language Explanation', 'SHELDRA answers: "Why did you tell me to evacuate?" '
-     '"I detected gas levels at 85ppm in Zone B. The procedure for >50ppm requires '
-     'immediate evacuation per OSHA 1910.120."'],
-    ['Confidence Provenance', 'Breakdown: model confidence (0.87) + context relevance '
-     '(0.92) + tree branch accuracy (0.89) = composite confidence (0.89).'],
-    ['Counterfactual', '"If you had been wearing your safety glasses, I would not have '
-     'interrupted. The rule was triggered by the violation, not by you specifically."'],
-    ['Decision Tree Path Highlight', 'In the flow chart, highlight the path taken and '
-     'alternative paths that were considered but deprioritized.'],
-]
-add_table(['Explanation Type', 'How It Works'], xai_types)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 18. HUMAN-IN-THE-LOOP WORKFLOW
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('18. Human-in-the-Loop Workflow', level=1)
-
-add_para(
-    'SHELDRA proposes actions. Supervisors approve, modify, or reject. All decisions are '
-    'logged and fed into the Decision Tree accuracy engine.'
-)
-
-add_para(
-    'Alert Generated by SHELDRA \u2192 Queued for Supervisor Review\n'
-    '\u251c\u2500 Supervisor Acknowledges \u2192 SHELDRA action executes\n'
-    '\u2502   \u251c\u2500 Auto-response after N seconds of inactivity (configurable)\n'
-    '\u2502   \u2514\u2500 Supervisor Override (modify or cancel)\n'
-    '\u2514\u2500 SHELDRA Escalates (if no response in 60s, alert next supervisor)\n'
-    '\n'
-    'Supervisor Console includes:\n'
-    '- Live SHELDRA interaction feed (every coaching moment)\n'
-    '- Ability to override SHELDRA recommendations with reason\n'
-    '- Audit log: searchable, filterable, exportable\n'
-    '- Shift handover: SHELDRA generates summary for incoming team\n'
-    '- Performance metrics: SHELDRA accuracy, response times, escalation rates'
-)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 19. EMERGENCY RESPONSE WORKFLOW
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('19. Emergency Response Workflow', level=1)
-
-add_para(
-    'When the compound risk score exceeds 0.8, SHELDRA switches to Emergency Mode:'
-)
-
-emergency = [
-    ['SHELDRA Tone Shift', 'Voice becomes clear, authoritative, time-stamped. "ATTENTION: '
-     'Gas leak detected in Zone B. Evacuate immediately via Exit 4."'],
-    ['Decision Tree Activation', 'Emergency tree loads automatically. SHELDRA guides step-'
-     'by-step. Each step is confirmed before proceeding.'],
-    ['Multi-Channel Alert', 'WebSocket push to dashboard + email alert + SMS to all '
-     'supervisors. Message includes: hazard type, location, severity, recommended action.'],
-    ['Escalation Ladder', 'Supervisor: 60s to acknowledge. Shift manager: 120s. '
-     'Plant director: 180s. SHELDRA logs every step.'],
-    ['Post-Incident Report', 'Auto-generated PDF: incident timeline, SHELDRA actions, '
-     'Decision Tree path taken, human responses, outcome, accuracy score.'],
-]
-add_table(['Action', 'Description'], emergency)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 20. VR TRAINING INTEGRATION
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('20. VR Training Integration', level=1)
-
-add_para(
-    'SHELDRA exists in VR. The same AI coach that guides workers on the factory floor '
-    'trains them in simulated scenarios \u2014 creating continuity between training and reality.'
-)
-
-add_para(
-    'VR Scene (A-Frame / Three.js XR):\n'
-    '- Full 3D factory environment with interactive hazards\n'
-    '- SHELDRA avatar rendered inside VR scene\n'
-    '- Hazard simulations: gas leak (visual + audio cues), fire, equipment failure, '
-    'falling objects\n'
-    '- Worker interacts via voice + hand controllers (if available)\n\n'
-    'Training Flow:\n'
-    '1. SHELDRA introduces the scenario\n'
-    '2. Hazard triggers (SHELDRA can trigger manually or automated)\n'
-    '3. Worker responds \u2014 SHELDRA observes, provides real-time feedback\n'
-    '4. Scenario ends \u2014 SHELDRA scores performance: reaction time, decision accuracy, '
-    'procedure adherence\n'
-    '5. Score \u2192 Worker Profile update\n'
-    '6. Adaptive training: SHELDRA adjusts future scenarios based on weak areas\n\n'
-    'For hackathon: desktop VR mode (mouse/keyboard navigation) with WebXR upgrade path.'
-)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 21. DATABASE SCHEMA
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('21. Database Schema & Data Model', level=1)
-
-dbs = [
-    ['Knowledge Graph', 'Neo4j', 'Worker profiles, hazard taxonomy, SHELDRA interaction logs, decision tree metadata', 'Graph queries, personalization, root cause analysis'],
-    ['Vector Store', 'Qdrant', 'Document embeddings for RAG, feature vectors for similarity', 'Semantic search, procedure retrieval, grounding'],
-    ['Time-Series', 'InfluxDB', 'IoT sensor readings, model performance metrics', 'Windowed aggregates, anomaly detection feed'],
-    ['Message Log', 'Kafka (retention 7d)', 'All events: sheldra.interactions, decision.trees, sensor data', 'Stream processing, audit trail, replay'],
-    ['Object Storage', 'MinIO / S3', 'Camera frames, SHELDRA interaction recordings, report PDFs', 'Long-term storage, compliance evidence'],
-    ['Cache', 'Redis', 'SHELDRA session state, context cache, WebSocket state', 'Sub-millisecond reads, Pub/Sub for real-time'],
-    ['Relational', 'PostgreSQL', 'Users, teams, configuration, audit log', 'Transactional data, auth, reporting'],
-]
-add_table(['Store', 'Tech', 'Data', 'Access Pattern'], dbs)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 22. API ARCHITECTURE
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('22. API Architecture', level=1)
-
-add_para(
-    'SHELDRA-first API design. Every endpoint exists to serve SHELDRA or the Decision Tree.'
-)
-
-endpoints = [
-    ['POST /api/v1/sheldra/chat', 'Send message to SHELDRA with context', 'SHELDRA interaction'],
-    ['WS /ws/sheldra/stream', 'Streaming SHELDRA responses (SSE fallback)', 'Real-time chat'],
-    ['GET /api/v1/sheldra/state', 'Current SHELDRA awareness state', 'Dashboard context panel'],
-    ['GET /api/v1/decision-trees/{hazard_id}', 'Current tree for a hazard', 'Flow chart viz'],
-    ['GET /api/v1/decision-trees/{id}/history', 'Version history + accuracy deltas', 'Accuracy dashboard'],
-    ['POST /api/v1/decision-trees/evaluate', 'Score a resolution outcome', '5-min update cycle'],
-    ['GET /api/v1/workers/{id}/profile', 'Worker profile with learning state', 'Personalization'],
-    ['PUT /api/v1/workers/{id}/profile', 'Update profile (supervisor)', 'Profile management'],
-    ['GET /api/v1/workers/{id}/interactions', 'SHELDRA interaction history for worker', 'Audit + learning'],
-    ['POST /api/v1/alerts/{id}/acknowledge', 'Supervisor acknowledges alert', 'HITL workflow'],
-    ['POST /api/v1/alerts/{id}/override', 'Override SHELDRA recommendation', 'HITL workflow'],
-    ['GET /api/v1/analytics/accuracy', 'Decision Tree accuracy dashboard', 'Analytics view'],
-]
-add_table(['Endpoint', 'Purpose', 'Consumer'], endpoints)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 23. FRONTEND DASHBOARD DESIGN
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('23. Frontend Dashboard Design', level=1)
-
-add_para(
-    'The dashboard is SHELDRA-centric. The primary view puts the SHELDRA avatar and '
-    'conversation at the center, with the Decision Tree flow chart alongside.'
-)
-
-views = [
-    ['SHELDRA Command Center (Default)', 
-     'SHELDRA 3D avatar (left panel, 40% width), conversation panel (center, 40%), '
-     'context sidebar (right, 20%). Context shows: current worker, current hazard, '
-     'environment state, recent interactions.'],
-    ['Decision Tree View',
-     'Full-screen interactive flow chart for current hazard. Highlighted path shows '
-     'recommended resolution. Color-coded nodes. Version badge.Accuracy score '
-     'prominent in header.'],
-    ['Worker Profile Panel',
-     'SHELDRA\u2019s view of a specific worker: profile, interaction history, learning '
-     'speed indicator, incident history, training scores, emotion timeline.'],
-    ['VR Training View',
-     'Embedded VR scene with SHELDRA avatar. Works in desktop mode (mouse/keyboard) '
-     'with WebXR upgrade for VR headsets.'],
-    ['Accuracy Dashboard',
-     'Decision Tree accuracy trends over time. Branch-level breakdown. Version history '
-     'graph. Update frequency indicator. "Tree updated 5 min ago" badge.'],
-    ['Supervisor Console',
-     'Live SHELDRA interaction feed. Alert queue. Override controls. Shift handover '
-     'summary. Audit log.'],
-]
-add_table(['View', 'Content'], views)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 24. LIVE DEMO FLOW
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('24. Live Demo Flow', level=1)
-
-add_heading('24.1 Demo Script (5 minutes)', level=2)
-
-demo = [
-    ['0:00-0:45', 'Meet SHELDRA', 'Dashboard loads with SHELDRA avatar. SHELDRA introduces '
-     'herself: "Welcome to Shift 3. I am SHELDRA, your safety coach. I will be monitoring '
-     'Zone A today." Show normal operation: workers moving, SHELDRA observing calmly.'],
-    ['0:45-1:30', 'PPE Violation + Corrective Feedback', 'Worker enters frame without safety '
-     'glasses. Vision Agent detects. SHELDRA activates: "Worker #3124, your safety glasses '
-     'are on your helmet. Please adjust them before entering Zone A." Show the Decision Tree '
-     'generating the PPE resolution flow chart in the side panel.'],
-    ['1:30-2:15', 'Personalization Demo', 'Switch to a novice worker profile. Same hazard '
-     '\u2014 SHELDRA gives step-by-step guidance with rationale. Switch to an expert profile '
-     '\u2014 SHELDRA gives quick confirmation. "Same hazard, three different SHELDRAs."'],
-    ['2:15-3:00', 'Gas Leak + Decision Tree Update', 'IoT simulator injects gas anomaly. '
-     'SHELDRA switches to emergency mode: "Gas leak detected in Zone B. Evacuate via Exit 4 '
-     'immediately." Decision Tree loads Gas Leak response tree. Show tree path highlight. '
-     'After resolution, show the tree update: "Decision Tree updated to version 8 \u2014 '
-     'accuracy: 94%."'],
-    ['3:00-3:30', 'VR Training', 'Switch to VR training scene. SHELDRA appears in VR. '
-     'Run a confined space training scenario. SHELDRA guides, scores performance, '
-     'updates worker profile. Show profile panel update.'],
-    ['3:30-4:00', 'Accuracy Loop', 'Show the Accuracy Dashboard. Decision Tree accuracy '
-     'trend over 24 hours (simulated). Show a branch being pruned. Show a new branch being '
-     'generated. "This tree is alive \u2014 it learns from every interaction."'],
-    ['4:00-4:30', 'Architecture Reveal', 'Flash the system architecture diagram. "Everything '
-     'you saw \u2014 the avatar, the voice, the trees, the personalization \u2014 is powered '
-     'by a unified intelligence layer: multi-agent system, knowledge graph, RAG pipeline, '
-     'all working together to make SHELDRA real."'],
-    ['4:30-5:00', 'Q&A Hook', '"SHELDRA is not a dashboard with AI features. SHELDRA is a '
-     'teammate \u2014 one that never blinks, never forgets, and always puts the worker first. '
-     'We would love to discuss how this becomes the standard for industrial safety."'],
-]
-add_table(['Time', 'Segment', 'Content'], demo)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 25. TECH STACK
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('25. Tech Stack with Justification', level=1)
-
-tech = [
-    ['SHELDRA Avatar', 'React Three Fiber + Three.js', 'Declarative 3D in React. WebGL native. '
-     'Full control over shaders, animations, and lip-sync.'],
-    ['SHELDRA Voice I/O', 'Whisper (STT) + ElevenLabs/Coqui (TTS)', 'Best-in-class speech '
-     'recognition + natural TTS. Coqui for local/offline fallback.'],
-    ['SHELDRA LLM', 'Llama 3 8B (via Ollama/Together)', 'Open-weight, capable of safety '
-     'reasoning. 8B fits consumer GPUs. Can run locally. Fine-tunable.'],
-    ['Decision Tree Engine', 'Custom Python (asyncio)', 'No framework overhead. Full control '
-     'over tree data model, update cycle, accuracy scoring.'],
-    ['Backend API', 'FastAPI (Python)', 'Async-native, auto OpenAPI docs, Pydantic validation. '
-     'Python ecosystem for AI integration.'],
-    ['Message Broker', 'Apache Kafka + Schema Registry', 'Industry standard. Durable, '
-     'replayable, partitioned. Typed schemas with Avro.'],
-    ['Stream Processing', 'KSQL / Apache Flink', 'SQL-level for simple aggregations. Flink '
-     'for CEP in later phases.'],
-    ['Knowledge Graph', 'Neo4j + Cypher', 'Most mature graph database. ACID. Cypher is '
-     'intuitive. Bloom for graph visualization.'],
-    ['Vector Store', 'Qdrant', 'Fastest vector search (Rust). Built-in hybrid. Payload '
-     'filtering. Lightweight.'],
-    ['Time-Series DB', 'InfluxDB OSS v2', 'Purpose-built. Downsampling, continuous queries.'],
-    ['Cache/State', 'Redis', 'Sub-ms reads. Pub/Sub for SHELDRA streaming. Session state.'],
-    ['Frontend', 'Next.js 14 + TypeScript', 'SSR/SSG. React Server Components. WebSocket '
-     'native support.'],
-    ['VR', 'A-Frame / Three.js XR', 'WebXR standard. Desktop + VR headset support. No app '
-     'store required.'],
-    ['LLM Serving', 'Ollama (local) / Together AI (cloud)', 'Ollama for hackathon (no cost). '
-     'Together for production (lower latency).'],
-    ['CI/CD', 'GitHub Actions', 'Free for public repos. Matrix builds. Tight GitHub integration.'],
-    ['Infrastructure', 'Docker + Terraform', 'Containerized everything. Reproducible infra.'],
-]
-add_table(['Layer', 'Technology', 'Justification'], tech)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 26. AI MODELS
-# ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('26. AI Models with Justification', level=1)
+add_heading('20. AI Models', level=1)
 
 models = [
-    ['SHELDRA LLM', 'Llama 3 8B (Meta)', 'Open-weight, offline-capable, safety-reasoning '
-     'competence. 8B fits VRAM constraints. Fine-tunable on safety domain data.'],
-    ['Text Embeddings', 'E5-mistral-7b (Microsoft)', 'Best-in-class embedding quality. 4096 '
-     'dim. Multilingual. Can be quantized for speed.'],
-    ['PPE Detection', 'YOLOv8n (Ultralytics)', 'Real-time on CPU. 6-class PPE. Fine-tunable '
-     'on custom datasets. 30+ FPS on edge.'],
-    ['Person Tracking', 'YOLOv8s + ByteTrack', 'Persistent IDs across frames. Essential for '
-     'SHELDRA addressing specific workers.'],
-    ['Pose Estimation', 'RTMPose (OpenMMLab)', '5ms/person on GPU. 17 keypoints. Feeds '
-     'SHELDRA ergonomic coaching and fall detection.'],
-    ['Time-Series Anomaly', 'TimesNet (Microsoft Research)', 'ICLR 2023 Best Paper. Multi-'
-     'period capture ideal for industrial cycles.'],
-    ['Speech-to-Text', 'Whisper (OpenAI)', 'Multilingual. Robust to industrial noise. '
-     'Tiny model for edge, Large for cloud.'],
-    ['Text-to-Speech', 'ElevenLabs / Coqui TTS', 'ElevenLabs for quality. Coqui for '
-     'offline/local. Both support voice customization for SHELDRA persona.'],
+    ['Llama 3 8B', 'LLM', 'Meta', '8B parameters, 8K context, open-weight', 'SHELDRA reasoning, RAG generation, explanation', 'Fine-tunable on safety data; 4-bit quantized for 8GB VRAM'],
+    ['E5-mistral-7b', 'Embedding', 'Microsoft', '4096-dim, Mistral-7b backbone', 'Document embedding for RAG', 'FP16 quantized; 50ms per embedding on CPU'],
+    ['YOLOv8n', 'Detection', 'Ultralytics', '3.2M params, 30+ FPS on CPU', 'PPE detection (6 classes)', 'ONNX export; int8 quantized for edge'],
+    ['YOLOv8s', 'Detection', 'Ultralytics', '11.2M params', 'Person detection + tracking', 'ONNX export; GPU optional'],
+    ['RTMPose-m', 'Pose', 'OpenMMLab', '~5ms/person on GPU', 'Behavior analysis', 'ONNX export; 17-keypoint'],
+    ['TimesNet', 'Time-Series', 'Microsoft Research', 'ICLR 2023 Best Paper', 'Anomaly detection', 'ONNX export; 60-input window'],
+    ['Whisper tiny', 'STT', 'OpenAI', '39M params, multilingual', 'Voice input', 'ONNX export; browser or server'],
+    ['Coqui TTS', 'TTS', 'Coqui AI', 'MIT license, offline', 'Voice output', 'Local inference; 2x real-time'],
 ]
-add_table(['Task', 'Model', 'Justification'], models)
+add_table(['Model', 'Type', 'Source', 'Specs', 'Use', 'Deployment'], models)
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 27. OPEN-SOURCE TOOLS
+# 21. PERFORMANCE
 # ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('27. Open-Source Tools', level=1)
+add_heading('21. Performance', level=1)
 
-oss = [
-    ['Apache Kafka', 'Message streaming', 'BSL 1.1', 'Data ingestion backbone'],
-    ['Neo4j', 'Graph database', 'GPL v3 / Commercial', 'Worker profiles + hazard taxonomy'],
-    ['Qdrant', 'Vector search', 'Apache 2.0', 'RAG grounding for SHELDRA'],
-    ['InfluxDB', 'Time-series DB', 'MIT (OSS)', 'Sensor data storage'],
-    ['MinIO', 'Object storage', 'AGPL v3', 'Frame + interaction recording storage'],
-    ['Redis', 'Cache + Pub/Sub', 'BSD 3-Clause', 'SHELDRA session state'],
-    ['PostgreSQL', 'Relational DB', 'PostgreSQL License', 'Users, configs, audit'],
-    ['FastAPI', 'Web framework', 'MIT', 'SHELDRA + Decision Tree API'],
-    ['Next.js', 'React framework', 'MIT', 'SHELDRA dashboard frontend'],
-    ['Three.js / R3F', '3D rendering', 'MIT', 'Holographic avatar + Digital Twin'],
-    ['YOLOv8', 'Object detection', 'AGPL v3', 'SHELDRA\u2019s visual awareness'],
-    ['TimesNet', 'Time-series model', 'MIT', 'Anomaly detection for Decision Tree'],
-    ['Llama 3', 'LLM', 'Custom (open)', 'SHELDRA\u2019s brain'],
-    ['E5', 'Text embeddings', 'MIT', 'RAG document embedding'],
-    ['Whisper', 'Speech-to-text', 'MIT', 'SHELDRA voice input'],
-    ['Coqui TTS', 'Text-to-speech', 'MIT', 'SHELDRA voice output (offline)'],
-    ['A-Frame', 'VR framework', 'MIT', 'VR training scenes'],
-    ['Docker', 'Containerization', 'Apache 2.0', 'Local dev + deployment'],
-    ['Terraform', 'Infra as code', 'BSL 1.1', 'Cloud provisioning'],
+perf = [
+    ['SHELDRA end-to-end (text chat)', '< 3s p95', 'LLM inference dominates (~2s). RAG retrieval < 200ms. KG query < 100ms. Streaming first token < 500ms (SSE).'],
+    ['SHELDRA end-to-end (voice)', '< 5s p95', 'STT (~1s) + LLM (~2s) + TTS (~1s). Optimize with streaming STT (incremental) and pre-fetch TTS on partial response.'],
+    ['Vision inference', '< 30ms per frame', 'YOLOv8n ONNX CPU. 5 FPS = 200ms per frame budget. Parallel inference across cameras (thread pool).'],
+    ['Time-series anomaly', '< 100ms per window', 'TimesNet ONNX CPU. 60-point window. 1-second cadence = 900ms budget.'],
+    ['Decision Tree accuracy', '< 2m per update cycle', 'Score aggregation + branch analysis. 5-minute cycle budget is generous. Tree size < 100 nodes.'],
+    ['API throughput', '100+ req/s per instance', 'FastAPI async handlers. Stateless servers. Horizontal scaling via ECS.'],
+    ['WebSocket fan-out', '10,000+ concurrent', 'Single WebSocket server (FastAPI) with async event loop. Scale via Redis Pub/Sub + multiple WS server instances.'],
+    ['Database queries', '< 50ms p99 (KG)', 'Neo4j query cache (Redis). Frequent queries < 5ms. Complex multi-hop queries < 50ms.'],
 ]
-add_table(['Tool', 'Purpose', 'License', 'SHELDRA Role'], oss)
+add_table(['Metric', 'Target', 'Architecture Contribution'], perf)
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 28. CLOUD DEPLOYMENT
+# 22. SCALABILITY
 # ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('28. Cloud Deployment Architecture', level=1)
+add_heading('22. Scalability', level=1)
 
-add_para(
-    'Hackathon: All services via Docker Compose on single machine (16GB RAM, optional GPU). '
-    'Ollama for local SHELDRA LLM. MinIO for storage. One command: docker-compose up.'
-)
+scalability = [
+    ['Single Facility', '10-50 cameras, 200-1000 sensors, 50-200 workers',
+     'Single SHELDRA Engine instance (4 vCPU, 16GB). Vision on CPU (ONNX). '
+     'All databases on single nodes. Kafka with 1 partition per camera group.'],
+    ['Multi-Facility (Mid)', '5-20 facilities, 500-5000 sensors, 500-2000 workers',
+     'One SHELDRA Engine per facility (federated). Facility-level KG with cross-facility '
+     'aggregation for benchmarking. Decision trees shared across facilities with same '
+     'equipment/hazard profiles. Centralized RAG with per-facility document collections.'],
+    ['Enterprise (100+ facilities)', '100-1000 facilities, 50K+ sensors, 20K+ workers',
+     'Hierarchical SHELDRA: facility-level engines report to regional aggregators. '
+     'Federated KG with global schema + local extensions. Global Decision Tree optimizer '
+     'shares high-accuracy branches across facilities. Tiered storage: hot (InfluxDB), '
+     'warm (downsampled), cold (S3 Parquet). GPU inference pool shared across facilities.'],
+]
+add_table(['Scale', 'Characteristics', 'Architecture'], scalability)
 
+add_para('')
 add_para(
-    'Production:\n'
-    '- SHELDRA API + Avatar: AWS ECS Fargate (auto-scaling based on concurrent sessions)\n'
-    '- SHELDRA LLM: AWS Bedrock / Together AI (managed inference, no GPU management)\n'
-    '- Kafka: Confluent Cloud / MSK\n'
-    '- Databases: Neo4j AuraDB, Qdrant Cloud, InfluxDB Cloud\n'
-    '- Storage: AWS S3 + CloudFront\n'
-    '- Frontend: Vercel (Next.js optimized)\n'
-    '- Monitoring: Grafana + Prometheus + Loki\n'
-    '- CI/CD: GitHub Actions \u2192 ECR \u2192 ECS blue/green'
+    'The primary scalability bottleneck is the LLM Reasoning Core, which must process '
+    'sequentially for each request. Mitigation: (1) request batching when multiple events '
+    'occur simultaneously, (2) priority queuing (emergency events skip the queue), '
+    '(3) smaller distilled models (Llama 3.2 3B) for low-complexity interactions with '
+    'fallback to 8B for complex reasoning.'
 )
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 29. EVALUATION METRICS
+# 23. DEMO FLOW
 # ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('29. Evaluation Metrics', level=1)
+add_heading('23. Demo Flow', level=1)
 
-metrics = [
-    ['SHELDRA Response Quality', '> 90% user satisfaction (worker survey)',
-     'Human evaluation on 50 interactions'],
-    ['SHELDRA Response Latency', '< 2s end-to-end (voice in \u2192 voice out)',
-     'Pipeline timing with streaming TTS'],
-    ['Decision Tree Accuracy', '> 85% average branch accuracy',
-     'Rolling 10-trial window per branch'],
-    ['Tree Update Latency', '< 5 min (target: 2 min median)',
-     'From outcome capture to tree version deployed'],
-    ['PPE Detection Accuracy', 'mAP > 0.85 at 0.5 IoU',
-     'YOLOv8 benchmark on PPE dataset'],
-    ['Anomaly Detection F1', '> 0.85',
-     'Precision-recall on labeled anomalies'],
-    ['Personalization Differentiation', 'Clear behavioral difference between profiles',
-     'A/B test: same hazard, 3 profiles, 3 different SHELDRA responses'],
-    ['VR Training Score Correlation', '> 0.7 correlation with real-world performance',
-     'Compare VR scores with supervisor evaluations'],
+add_para('The 5-minute demonstration is structured in 8 contiguous segments:', bold=True)
+demo_flow = [
+    ['1. SHELDRA Introduction', '0:00-0:40', 'Dashboard loads. SHELDRA avatar appears with idle animation. SHELDRA speaks: "Welcome to Shift 3. I am SHELDRA, your safety coach. All systems normal." Safety score: 92. Normal factory operation visible in Digital Twin.'],
+    ['2. Vision-Triggered Correction', '0:40-1:30', 'Synthetic camera feed shows worker entering without safety glasses. Vision Intelligence detects: {class: "missing_glasses", worker_id: "w3124", confidence: 0.94}. SHELDRA speaks: "Worker #3124, your safety glasses are on your helmet. Please adjust them before entering Zone A." Decision Tree flow chart opens beside avatar, highlighting the PPE correction path.'],
+    ['3. Personalization Comparison', '1:30-2:15', 'Dashboard switches to novice worker profile. Same PPE violation triggers longer response with rationale. Novice: "Safety glasses protect your eyes from flying debris. Please wear them at all times in Zone A." Switch to expert: brief confirmation only. "One SHELDRA, three different responses."'],
+    ['4. Sensor-Driven Emergency', '2:15-3:00', 'IoT simulator injects gas leak anomaly. Monitoring Intelligence detects: compound anomaly score 0.88. Decision Tree loads gas leak response tree. SHELDRA switches to emergency tone: "ATTENTION: Gas leak detected in Zone B. Evacuate via Exit 4 immediately." Tree path highlights in real-time. After resolution, tree updates: "Tree accuracy: 92%. Version 8 deployed."'],
+    ['5. Accuracy Feedback Loop', '3:00-3:30', 'Accuracy dashboard: tree accuracy trend (86% -> 92% over 7 versions), branch breakdown (best/worst performing), version history. "This tree learns every 5 minutes. Every incident makes it smarter."'],
+    ['6. VR Training', '3:30-4:00', 'Switch to VR scene. SHELDRA avatar in VR. Confined space training scenario. SHELDRA guides step-by-step. Worker response scored. Score updates profile. "Same SHELDRA that guides on the floor also trains in VR."'],
+    ['7. Architecture Reveal', '4:00-4:30', 'System architecture diagram displayed. "Everything you saw \u2014 one Intelligence Engine, 11 modules. The avatar is just an interface. SHELDRA is the brain."'],
+    ['8. Closing & Q&A Hook', '4:30-5:00', '"SHELDRA is the first AI safety coach that walks beside every worker. Built in 72 hours. Designed for any facility. We\u2019d love to discuss how this redefines industrial safety."'],
 ]
-add_table(['Metric', 'Target', 'Method'], metrics)
+add_table(['Segment', 'Duration', 'Content'], demo_flow)
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 30. FUTURE ROADMAP
+# 24. ROADMAP
 # ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('30. Future Roadmap: MVP \u2192 Enterprise SaaS', level=1)
+add_heading('24. Roadmap', level=1)
 
 roadmap = [
-    ['MVP (Hackathon)', 'Week 1-3',
-     'SHELDRA 3D avatar with voice I/O, basic personalization (3 profiles), '
-     'Decision Tree with 3 pre-built trees, single facility simulation, '
-     'Vision Agent for PPE feedback, basic RAG, synthetic data',
-     'Working SHELDRA demo, Decision Tree update cycle proven, '
-     '3-judge panel WOW moment'],
-    ['Alpha', 'Month 1-2',
-     'Real camera + IoT integration, 10+ Decision Trees auto-generated, '
-     'personalization engine with learning speed detection, VR training scene, '
-     '5-min update cycle on real data, Grafana monitoring',
-     'First pilot facility, real-data validation, SOC 2 prep start'],
-    ['Beta', 'Month 3-4',
-     'Multi-facility SHELDRA instances, federated learning across sites, '
-     'mobile app with avatar, AR overlay (HoloLens concept), '
-     'SSO/RBAC, enterprise integration APIs',
-     '3+ pilot facilities, partner integrations, SOC 2 readiness'],
-    ['GA v1', 'Month 5-7',
-     'On-premise deployment, air-gapped mode, custom SHELDRA fine-tuning, '
-     'marketplace for Decision Trees, advanced personalization (emotion AI), '
-     '99.9% SLA',
-     '10+ paying customers, $1M+ ARR'],
-    ['Enterprise SaaS', 'Month 8-12',
-     'Global multi-region, cross-facility benchmarking, '
-     'insurance API integration, regulatory filing automation, '
-     'white-label for system integrators',
-     '50+ customers, $5M+ ARR, Series A'],
-    ['Platform Vision', 'Year 2+',
-     'Industry-specific SHELDRA models (oil & gas, mining, logistics, healthcare), '
-     'autonomous SHELDRA actions (AI-initiated lockdown for extreme scenarios), '
-     'regulator-approved Safety Twin, SHELDRA app marketplace',
-     'Category leader, $50M+ ARR'],
+    ['MVP (Hackathon)', 'SHELDRA Intelligence Engine with 11 modules, 3 worker profiles, 5 Decision Trees, synthetic data, single-facility, web dashboard'],
+    ['Alpha (Month 1-2)', 'Real camera + IoT integration, auto-generated Decision Trees, learning speed detection, VR training, real-data validation'],
+    ['Beta (Month 3-4)', 'Multi-facility, federated KGs, mobile app, AR overlay, SSO, SOC 2 prep, 3+ pilot customers'],
+    ['GA v1 (Month 5-7)', 'On-premise deployment, air-gapped mode, custom model fine-tuning, DT marketplace, 99.9% SLA, 10+ customers'],
+    ['Enterprise SaaS (Month 8-12)', 'Multi-region, cross-facility benchmarking, insurance API, regulatory filing, white-label, 50+ customers'],
+    ['Platform (Year 2+)', 'Industry-specific models, autonomous actions, regulator-approved safety twin, community ecosystem, $50M+ ARR'],
 ]
-add_table(['Phase', 'Timeline', 'Capabilities', 'Milestones'], roadmap)
+add_table(['Phase', 'Capabilities'], roadmap)
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 31. RISKS AND MITIGATIONS
+# 25. RISKS
 # ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('31. Risks and Mitigations', level=1)
+add_heading('25. Risks', level=1)
 
 risks = [
-    ['Avatar performance', 'Med', 'High', '3D avatar too heavy for hackathon hardware',
-     'Fallback: 2D Lottie animation with same voice + personality. Prove 3D works but '
-     'have 2D ready.'],
-    ['Voice I/O in noisy hall', 'Med', 'Med', 'Demo hall noise breaks STT/TTS',
-     'Text chat fallback always visible. Captions on all SHELDRA speech. '
-     'Pre-record key demo segments.'],
-    ['LLM latency', 'High', 'High', 'SHELDRA response > 2s breaks real-time illusion',
-     'Streaming TTS (words appear as generated). Pre-generate demo responses. '
-     'Show "SHELDRA thinking" animation.'],
-    ['Decision Tree complexity', 'Med', 'High', 'Auto-generating valid trees from KG too complex',
-     'Seed 5 expert-crafted trees. Demo update cycle on 1-2 trees. '
-     'Auto-generation shown as roadmap.'],
-    ['Personalization underwhelming', 'Low', 'High', 'Profiles not different enough in demo',
-     'Pre-create 3 exaggerated profiles: novice (needs full handholding), '
-     'experienced (brief), expert (confirmation only). Dramatize the difference.'],
-    ['Integration complexity', 'High', 'Med', 'Different facility protocols, camera brands, sensors',
-     'Adapter pattern from day one. REST + MQTT bridges. '
-     'Start with synthetic data; real integration in alpha.'],
+    ['LLM Hallucination', 'Critical', 'High', 'SHELDRA generates incorrect safety procedure.', 'RAG grounding with citation anchoring. Confidence threshold with escalation fallback. Human review of all procedural guidance. Multiple guardrail layers.'],
+    ['Vision Accuracy in Edge Cases', 'High', 'Medium', 'PPE detection fails in low light, occlusion, or unusual angles.', 'Confidence filtering (min 0.5). Human-in-the-loop for low-confidence detections. Ensemble of YOLOv8 + rule-based checks.'],
+    ['Integration Complexity', 'High', 'Medium', 'Each facility has different cameras, PLCs, and sensor protocols.', 'Adapter pattern from day one. REST + MQTT bridges. Start with synthetic data; real integration in alpha phase.'],
+    ['3D Avatar Performance', 'Medium', 'Medium', 'Browser-based 3D avatar lags on low-end hardware.', '2D Lottie fallback with identical behavior. Progressive enhancement: 3D if GPU available, 2D otherwise.'],
+    ['Data Privacy Regulations', 'Medium', 'High', 'Camera feeds contain biometric data. Sensor data reveals operational patterns.', 'On-premise deployment option. Edge processing (no raw video leaves facility). Data retention policies. Compliance-by-design from day one.'],
+    ['Market Adoption', 'Medium', 'Medium', 'Industrial companies are risk-averse and slow to adopt new technology.', 'Start with "safety co-pilot" (low-risk, high-value). SOC 2 from day one. Case studies with measurable ROI. Free tier for small facilities.'],
 ]
-add_table(['Risk', 'Prob', 'Impact', 'Description', 'Mitigation'], risks)
+add_table(['Risk', 'Impact', 'Prob.', 'Description', 'Mitigation'], risks)
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 32. UNICORN THESIS
+# 26. FUTURE ENHANCEMENTS
 # ═══════════════════════════════════════════════════════════════════════════
-doc.add_heading('32. Why SHELDRA Can Become a Unicorn Startup', level=1)
+add_heading('26. Future Enhancements', level=1)
 
-add_heading('32.1 Market Timing', level=2)
-add_para(
-    '- Industrial safety market: $25B+ growing at 8% CAGR\n'
-    '- Industrial AI market: $15B+ at 30% CAGR\n'
-    '- OSHA fines increased 78% since 2020; severe violator program expanding\n'
-    '- 2.1M US manufacturing jobs unfilled \u2014 automation of safety monitoring is necessary\n'
-    '- LLMs (Llama 3), TTS (ElevenLabs), and 3D web (Three.js) have reached production maturity\n'
-    '- Perfect storm: regulation + labor shortage + AI maturity + hardware affordability'
-)
-
-add_heading('32.2 Competitive Moat', level=2)
-add_para(
-    '1. SHELDRA is the first AI safety coach, not a dashboard.\n'
-    '   Competitors build screens to watch. SHELDRA is a presence that watches over workers. '
-    'This fundamental relationship inversion cannot be copied by adding a chatbot to a dashboard.\n\n'
-    '2. Personalization at individual level.\n'
-    '   No industrial safety system adapts to each worker\u2019s experience, learning speed, '
-    'and emotional state. SHELDRA is different for every person.\n\n'
-    '3. Living Decision Trees.\n'
-    '   Static checklists are the industry standard. Our 5-minute update cycle creates a '
-    'self-improving system that gets smarter with every incident.\n\n'
-    '4. Holographic multi-modal interface.\n'
-    '   Voice, 3D avatar, AR, VR, text \u2014 SHELDRA meets workers where they are. '
-    'No competitor offers this range of interaction modes.\n\n'
-    '5. Data network effects.\n'
-    '   Every Decision Tree update across every facility improves the system for all. '
-    'Privacy-preserving federated learning creates a compounding advantage.'
-)
-
-add_heading('32.3 Revenue Model', level=2)
-add_para(
-    '- Per-worker subscription: $50-200/worker/month depending on interaction volume\n'
-    '- Tiered: SHELDRA Basic (text), SHELDRA Pro (voice + avatar), SHELDRA Enterprise (full suite)\n'
-    '- Professional services: Custom avatar design, VR scenario creation, tree tuning\n'
-    '- Marketplace: Community Decision Trees, SHELDRA voice packs, VR training modules\n'
-    '- Target pricing: $2K-$20K/month per facility; $100K-$1M/year enterprise\n'
-    '- Gross margin: 75-85%'
-)
-
-add_heading('32.4 Investor Narrative', level=2)
-add_para(
-    '"We are building the operating system for industrial safety \u2014 but our interface '
-    'is not a dashboard. It is an AI person named SHELDRA who walks beside every worker. '
-    'She sees what they see, knows what they know, adapts to how they learn, and guides '
-    'them through every hazard. Her Decision Tree brain learns from every incident and '
-    'updates itself every 5 minutes.\n\n'
-    'Industrial safety is a $25B market with incumbents who sell yesterday\u2019s technology. '
-    'SHELDRA is not a feature \u2014 she is a new category. We start with safety, but the '
-    'same SHELDRA architecture applies to quality assurance, maintenance guidance, and '
-    'operations training. That is a $100B+ TAM.\n\n'
-    'We are not building a better dashboard. We are building every worker\u2019s '
-    'personal AI safety guardian."'
-)
-
-# ── Final page ──
-doc.add_page_break()
-doc.add_paragraph()
-p = doc.add_paragraph()
-p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-run = p.add_run('"SHELDRA is not a tool.\nSHELDRA is a teammate \u2014\none that never blinks, never forgets,\nand always puts the worker first."')
-run.italic = True
-run.font.size = Pt(16)
-run.font.color.rgb = RGBColor(0x1A, 0x3C, 0x6E)
+enhancements = [
+    ['Acoustic Intelligence', 'Microphone array module for abnormal sound detection (gas leak hiss, equipment bearing failure whine, human distress calls). Reuses existing EventOrchestrator pattern.'],
+    ['Wearable Integration', 'Biometric sensors (heart rate, skin temperature, galvanic skin response) for stress and fatigue detection. SHELDRA adapts response based on physiological state.'],
+    ['Predictive Maintenance', 'Extend TimesNet to predict equipment failure before it occurs (currently detects anomalies after they begin). Integrate with Decision Tree for pre-failure procedural guidance.'],
+    ['Cross-Facility Learning', 'Privacy-preserving federated learning across facilities. Decision Tree improvements at one facility propagate to others without sharing raw incident data.'],
+    ['Autonomous Safety Actions', 'For extreme scenarios (imminent catastrophic failure), SHELDRA can initiate safety actions (equipment shutdown, zone evacuation) without waiting for supervisor confirmation. Configurable per facility risk tolerance.'],
+    ['Regulatory Filing Automation', 'Auto-generate OSHA 300 logs, incident reports, and compliance documentation from SHELDRA interaction history. Reduce administrative burden on safety officers.'],
+    ['Multi-Language Real-Time Translation', 'SHELDRA detects worker language and responds in kind. Enables multilingual teams to receive guidance in their preferred language.'],
+]
+for name, desc in enhancements:
+    p = doc.add_paragraph()
+    r = p.add_run(name + ': ')
+    r.bold = True
+    p.add_run(desc)
 
 # ── Save ──
 output_path = '/Users/nayantraramakrishnan/Desktop/developer/Projects/ey-hackathon/industrial-safety-intelligence-platform-architecture.docx'
 doc.save(output_path)
-print(f'SHELDRA architecture document saved to: {output_path}')
+print(f'Document saved: {output_path}')

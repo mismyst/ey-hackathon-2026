@@ -1,309 +1,344 @@
-# ET AI Hackathon 2026 — Industrial Safety Intelligence Platform
+# SHELDRA — Industrial Safety Intelligence Platform
 
-## Execution Plan: Phases, Priorities & Team Split
-
----
-
-## Vision Statement
-
-> SHELDRA — an autonomous holographic AI safety coach that walks beside every worker, sees what they see, knows what they know, and guides them through every hazard with personalized, adaptive intelligence. Backed by a real-time decision tree engine that learns from every interaction, every sensor, every incident.
+## Project Plan
 
 ---
 
-## Two Primary Pillars (Everything Else Supports These)
+## Architecture in One Sentence
 
-| # | Pillar | What It Is | Why It Wins |
-|---|--------|------------|-------------|
-| **1** | **SHELDRA** — Holographic AI Safety Coach | An adaptive AI avatar that provides real-time guidance, corrective feedback, and personalized training to workers via AR/VR/mobile. Adapts to each worker's profile, learning speed, and experience level. | No other industrial safety system puts an _intelligent, personalized coach_ at the center. Not a dashboard — a relationship. |
-| **2** | **Decision Tree Engine** — Automated Hazard Resolution | A real-time decision tree algorithm that ingests sensor data, worker context, and historical incidents to generate step-by-step hazard resolution flow charts. Updates every 5 minutes with new data for continuous accuracy improvement. | Replaces static safety checklists with _living, learning_ decision trees that evolve with every incident. |
-
-> Everything below — Multi-Agent System, Knowledge Graph, Computer Vision, RAG, Digital Twin, Time-Series — exists to **feed and empower** these two pillars.
+SHELDRA is a single AI system — the **SHELDRA Intelligence Engine** — with 11 internal modules. Everything else (dashboard, avatar, voice, VR, API) is just an interface to SHELDRA. The engine ingests heterogeneous data, reasons over it with an LLM core, maintains state via a Knowledge Graph and Memory Manager, generates hazard resolution trees that improve every 5 minutes, and delivers personalized, explainable safety guidance through any frontend channel.
 
 ---
 
-## Team Structure
-
-| Person | Role | Primary Focus (SHELDRA) | Secondary Focus (Decision Tree) |
-|--------|------|------------------------|----------------------------------|
-| **A** | AI/ML Engineer | SHELDRA core AI (LLM fine-tuning, personalization engine, voice/emotion models), Worker profile learning | Decision tree node expansion logic, accuracy scoring, RL from feedback |
-| **B** | Backend/Infrastructure | SHELDRA API, real-time context ingestion, Knowledge Graph for personalization, multi-agent orchestration | Decision tree engine (generation + update pipeline), 5-min refresh cycle, evaluation metrics |
-| **C** | Full-Stack / Frontend | SHELDRA 3D holographic avatar UI (Three.js/WebXR), voice I/O, AR overlay wireframes, VR training scene | Decision tree flow chart visualization (interactive DAG), hazard resolution walkthrough UI |
-
----
-
-## Priority Matrix
-
-| Priority | Category | Components | Effort | Impact |
-|----------|----------|------------|--------|--------|
-| **P0** | **Primary** | SHELDRA holographic avatar + voice interaction + real-time coaching | High | Highest |
-| **P0** | **Primary** | Decision Tree Engine — dynamic generation + 5-min update cycle | High | Highest |
-| **P0** | **Supporting** | Worker profile model + personalization engine | Medium | High |
-| **P0** | **Supporting** | Real-time context ingestion (vision + IoT → SHELDRA awareness) | Medium | High |
-| **P1** | **Supporting** | Multi-Agent System (agents feed SHELDRA's awareness) | High | High |
-| **P1** | **Supporting** | Knowledge Graph (worker context, hazard relationships) | Medium | High |
-| **P1** | **Supporting** | Decision tree flow chart visualization UI | Medium | High |
-| **P1** | **UX** | VR training scenario integration | High | High |
-| **P2** | **Supporting** | Computer Vision pipeline (feeds SHELDRA's "eyes") | Medium | Medium |
-| **P2** | **Supporting** | Time-series anomaly detection (feeds Decision Tree) | Medium | Medium |
-| **P2** | **Supporting** | RAG for SHELDRA's safety knowledge grounding | Medium | High |
-| **P2** | **UX** | AR overlay wireframes (HoloLens-style concept) | Medium | Medium |
-| **P3** | **Supporting** | Digital Twin (3D spatial context for SHELDRA) | High | Medium |
-| **P3** | **Metrics** | Accuracy evaluation dashboard for hazard measures | Medium | Medium |
-
----
-
-## Phase 0: Foundation (Pre-Hackathon)
-
-| Task | Owner | Duration | Dependencies |
-|------|-------|----------|--------------|
-| Set up monorepo (GitHub) | B | 1h | None |
-| Configure cloud accounts | B | 1h | None |
-| **SHELDRA persona design** — name, voice, visual identity | All | 2h | None |
-| Research 3D avatar frameworks (Ready Player Me, Three.js avatars) | C | 2h | None |
-| Docker-compose for local infra (Kafka, Neo4j, Qdrant, Redis) | B | 2h | None |
-| Frontend scaffold (Next.js + Three.js + WebXR + Tailwind) | C | 2h | None |
-| Define API contracts (OpenAPI spec — SHELDRA endpoints first) | B + C | 2h | None |
-| Seed Knowledge Graph schema (worker profiles + hazard taxonomy) | B | 2h | Neo4j running |
-| Set up CI/CD (GitHub Actions) | B | 1h | Repo ready |
-| **Collect safety procedure PDFs for SHELDRA's knowledge base** | A | 2h | None |
-
-**Milestone: SHELDRA avatar renders in browser; Knowledge Graph seeded**
-
----
-
-## Phase 1: SHELDRA + Decision Tree Core (Day 1)
-
-### 1A — SHELDRA Core AI (P0 — A)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| Design SHELDRA system prompt + guardrails (safety-critical LLM behavior) | A | 1h |
-| Implement worker profile model (experience, learning speed, language, certs) | A | 1.5h |
-| Build personalization engine (profile → prompt augmentation → response tuning) | A | 2h |
-| Implement SHELDRA response pipeline: Context → Profile → RAG → LLM → Response | A | 2h |
-| Voice I/O integration (Web Speech API + ElevenLabs TTS / Whisper STT) | A + C | 2h |
-| Implement corrective feedback generation (from CV observations) | A | 1.5h |
-| Build SHELDRA emotional awareness (voice tone analysis + stress detection) | A | 2h |
-
-### 1B — SHELDRA Holographic Avatar (P0 — C)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| 3D avatar rendering in Three.js / React Three Fiber | C | 3h |
-| Lip-sync animation from TTS audio | C | 1.5h |
-| Gesture animation system (pointing, nodding, warning stance) | C | 2h |
-| SHELDRA UI overlay (speech bubble, context panel, mini-map) | C | 2h |
-| Mobile + desktop responsive layout | C | 1h |
-| Ambient mode (idle animations, environmental scanning visualization) | C | 1h |
-
-### 1C — Decision Tree Engine (P0 — B)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| Design decision tree data model (JSON schema: nodes, edges, conditions, actions) | B | 1.5h |
-| Implement tree generator from rule patterns + KG queries | B | 2h |
-| Implement 5-minute update cycle (Apache Airflow / cron + diff engine) | B | 2h |
-| Build accuracy scorer (compare predicted hazard resolution → actual outcome) | B | 1.5h |
-| Implement tree versioning (v1 → v2 → v3 with accuracy deltas) | B | 1h |
-| Decision tree → API endpoint for SHELDRA consumption | B | 1h |
-
-### 1D — Decision Tree Visualization (P0 — C)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| Interactive DAG flow chart renderer (React Flow) | C | 2h |
-| Color-coded node states (safe path green, warning yellow, hazard red) | C | 1h |
-| Step-by-step resolution walkthrough mode | C | 1.5h |
-| Export flow chart as image/PDF | C | 0.5h |
-
-**Milestone: SHELDRA speaks and guides; Decision Tree generates first flow chart**
-
----
-
-## Phase 2: Integration + Supporting Intelligence (Day 2)
-
-### 2A — Multi-Agent System → Feeds SHELDRA (P1 — A + B)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| Orchestrator Agent — routes all observations to SHELDRA context | B | 2h |
-| Vision Agent — PPE/behavior detection → SHELDRA corrective feedback triggers | A | 2h |
-| Monitoring Agent — time-series anomaly → Decision Tree hazard input | A | 2h |
-| Compliance Agent — KG queries → SHELDRA regulatory guidance | B | 1.5h |
-| RAG Agent — safety document retrieval → SHELDRA knowledge grounding | A + B | 2h |
-| Explanation Agent — SHELDRA decision tracing ("SHELDRA, why did you say that?") | A | 1.5h |
-
-### 2B — Knowledge Graph → Personalization (P1 — B)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| Worker profile nodes (experience, certs, learning speed, incident history) | B | 1h |
-| Hazard taxonomy nodes + decision tree version linking | B | 1.5h |
-| SHELDRA interaction history (every coaching moment → graph edge) | B | 1h |
-| Temporal query: "What has this worker learned in the last shift?" | B | 1h |
-
-### 2C — VR Training Integration (P1 — C + A)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| SHELDRA in VR scene (Three.js XR / A-Frame) | C | 3h |
-| Hazard simulation scenarios (gas leak, fire, equipment failure) | A | 2h |
-| Worker response scoring in VR | A | 1.5h |
-| VR performance → worker profile update | B | 1h |
-
-### 2D — Computer Vision → SHELDRA's Eyes (P2 — A)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| PPE detection → SHELDRA corrective feedback ("Your helmet is unstrapped") | A | 2h |
-| Unsafe behavior detection → SHELDRA warning | A | 2h |
-| Zone encroachment → SHELDRA redirection | A | 1.5h |
-| Frame-level reasoning → structured observation for SHELDRA context | A | 1h |
-
-### 2E — Time-Series → Decision Tree Input (P2 — A)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| TimesNet anomaly detection on streaming sensor data | A | 2h |
-| Anomaly → Decision Tree hazard trigger ("vibration anomaly on Machine #7 → show flow chart") | A | 1.5h |
-| Multi-sensor correlation → compound hazard detection | A | 1.5h |
-
-**Milestone: SHELDRA sees, knows, and guides; Decision Trees evolve with data**
-
----
-
-## Phase 3: Polish + Accuracy Loop (Day 3)
-
-### 3A — SHELDRA Refinement (P2 — A + C)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| SHELDRA emotional range (calm coach, urgent warning, praise for compliance) | A | 2h |
-| Multi-language support (top 3 industrial languages) | A | 1.5h |
-| SHELDRA "memory" (recalls past interactions with this worker) | B | 1h |
-| Avatar polish (animations, transitions, visual effects) | C | 2h |
-| SHELDRA AR overlay wireframes (HoloLens-style HUD concept) | C | 2h |
-
-### 3B — Decision Tree Accuracy Engine (P2 — B + A)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| Accuracy metrics dashboard (precision, recall for hazard resolution) | B | 1.5h |
-| Automated tree pruning (remove low-accuracy branches) | A + B | 2h |
-| A/B testing: old tree vs new tree recommendation | B | 1.5h |
-| Feedback ingestion from SHELDRA interactions → tree improvement | B | 1h |
-
-### 3C — Human-in-the-Loop (P2 — C)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| Supervisor override of SHELDRA recommendation | C | 1.5h |
-| SHELDRA audit log (every coaching moment recorded) | B | 1h |
-| Shift handover: SHELDRA briefs incoming shift on hazards + worker status | A + C | 2h |
-| Incident report generation (SHELDRA's perspective + Decision Tree path taken) | B + A | 1h |
-
-### 3D — Real-Time Update Pipeline (P2 — B)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| 5-minute incremental update for Decision Trees | B | 1.5h |
-| Worker profile real-time sync (SHELDRA interactions → graph update → profile) | B | 1h |
-| Accuracy measure pipeline (every hazard resolution → scored → tree updated) | B | 1.5h |
-| Kafka topic restructure: `sheldra.interactions`, `decision.trees`, `worker.profiles` | B | 1h |
-
-### 3E — Dashboard + DEMO Readiness (P2 — C)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| Main dashboard: SHELDRA view (avatar + conversation + context panel) | C | 2h |
-| Decision Tree live view (click any hazard → see current flow chart) | C | 1.5h |
-| Worker profile panel (SHELDRA's view of each worker) | C | 1h |
-| Accuracy dashboard (tree accuracy trends, hazard resolution rates) | C | 1h |
-| Mobile-responsive SHELDRA interface | C | 1h |
-| **Demo script: SHELDRA-guided hazard resolution walkthrough** | All | 2h |
-
-### 3F — Deployment (P2 — B)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| Containerize all services | B | 2h |
-| Deploy SHELDRA API + avatar to cloud | B | 2h |
-| WebSocket for real-time SHELDRA streaming | B | 1h |
-| Load test: 100 concurrent SHELDRA sessions | B | 1h |
-
-**Milestone: SHELDRA fully operational — personalized coaching, real-time decision trees, accuracy feedback loop**
-
----
-
-## Phase 4: Presentation Prep (Last 4 Hours)
-
-| Task | Owner | Est. Time |
-|------|-------|-----------|
-| Script: "Meet SHELDRA — the world's first holographic AI safety coach" | All | 1h |
-| Live demo: SHELDRA guides worker through hazard → Decision Tree generates flow chart → accuracy loop closes | All | 2h |
-| Slide deck: SHELDRA-first narrative | C | 1h |
-| Backup demo recording | All | 30m |
-| Judge Q&A: "How does SHELDRA personalize?" "How fast do trees update?" | All | 30m |
-
----
-
-## Team Weekly Allocation Summary
-
-| Phase | Person A (AI/ML) | Person B (Backend/Infra) | Person C (Full-Stack) |
-|-------|-----------------|-------------------------|----------------------|
-| Foundation | SHELDRA prompt design, worker profile model | Infra, KG schema (worker + hazard), API contracts | Avatar scaffold (Three.js), SHELDRA UI shell |
-| Day 1 | SHELDRA core AI + personalization + voice I/O + feedback | Decision Tree engine + update cycle + API | SHELDRA 3D avatar + lip-sync + gestures + Decision Tree viz |
-| Day 2 | Multi-agent: Vision + Monitoring for SHELDRA + DT | Multi-agent: Orchestrator + Compliance + RAG + KG personalization | VR scene + SHELDRA in VR + Decision Tree step walkthrough |
-| Day 3 | SHELDRA emotion + multi-language + DT tree pruning | 5-min update pipeline + accuracy metrics + audit | SHELDRA polish + AR wireframes + accuracy dashboard |
-| Presentation | SHELDRA deep dive (AI decisions) | Architecture + Decision Tree accuracy story | SHELDRA live demo lead + avatar showcase |
-
----
-
-## Architecture Summary
+## System Layers
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     SHELDRA (Holographic AI Coach)              │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────────────┐ │
-│  │  Avatar   │  │  Voice   │  │Personal- │  │   Emotional    │ │
-│  │   (3D)    │  │ I/O (TTS │  │ ization  │  │  Awareness     │ │
-│  │           │  │  / STT)  │  │  Engine  │  │ (stress/fatigue)│ │
-│  └─────┬─────┘  └────┬─────┘  └────┬─────┘  └───────┬────────┘ │
-│        └──────────────┴─────────────┴────────────────┘         │
-│                           │                                     │
-│                    Context Fusion Layer                         │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-            ┌──────────────┼──────────────┐
-            ▼              ▼              ▼
-   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-   │ Multi-Agent │  │ Knowledge   │  │ Decision    │
-   │ System      │  │ Graph       │  │ Tree Engine │
-   │ (feeds      │  │ (worker     │  │ (generates   │
-   │  awareness) │  │  profiles)  │  │  flow charts)│
-   └──────┬──────┘  └──────┬──────┘  └──────┬──────┘
-          │                │                │
-          ▼                ▼                ▼
-   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-   │ CV + IoT    │  │ RAG (safety │  │ 5-min       │
-   │ Sensors     │  │ procedures) │  │ Update Cycle│
-   └─────────────┘  └─────────────┘  └─────────────┘
+User (Worker / Supervisor / Safety Officer)
+     ↓
+┌──────────────────────────────────────────┐
+│  Presentation Layer                       │
+│  Dashboard (Next.js) · Avatar (R3F)      │
+│  Voice (STT/TTS) · VR (A-Frame)          │
+└────────────────┬─────────────────────────┘
+                 │ HTTPS / WebSocket
+┌────────────────▼─────────────────────────┐
+│  API Layer (FastAPI)                      │
+│  Entry: /api/v1/sheldra/*                 │
+└────────────────┬─────────────────────────┘
+                 │
+┌────────────────▼─────────────────────────┐
+│  SHELDRA Intelligence Engine              │
+│  ┌──────────────┬──────────────┬────────┐ │
+│  │ Orchestrator │ LLM Core     │ DecTree│ │
+│  │ Personalize  │ KG Manager   │ RAG    │ │
+│  │ Vision Intel │ Monitor Intel│ Memory │ │
+│  │ Explainability  │ Guardrails        │ │
+│  └──────────────┴──────────────┴────────┘ │
+└────────────────┬─────────────────────────┘
+                 │
+┌────────────────▼─────────────────────────┐
+│  Infrastructure Layer                     │
+│  Kafka · Redis · MinIO · Service Mesh     │
+└────────────────┬─────────────────────────┘
+                 │
+┌────────────────▼─────────────────────────┐
+│  Data Layer                               │
+│  Neo4j · Qdrant · InfluxDB · PostgreSQL   │
+└────────────────┬─────────────────────────┘
+                 │
+┌────────────────▼─────────────────────────┐
+│  Cloud Layer                              │
+│  AWS ECS · RDS · S3 · CloudFront          │
+└──────────────────────────────────────────┘
 ```
 
----
-
-## Risk Mitigation
-
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| 3D avatar too heavy for hackathon | Medium | High | Fallback to 2D animated character (Lottie/Bodymovin) with same personality |
-| Voice I/O fails in noisy demo hall | Medium | Medium | Text-chat fallback; captions always visible |
-| Decision Tree too complex to auto-generate | Medium | High | Seed with 3-5 pre-built trees; real-time update demo on one tree |
-| LLM latency breaks real-time illusion | High | High | Pre-generate SHELDRA responses for demo scenarios; streaming TTS |
-| Personalization insufficient for demo impact | Low | Medium | Pre-create 3 worker profiles (novice, experienced, expert) with visibly different SHELDRA behavior |
+**Principle**: The Intelligence Engine has zero knowledge of the frontend. The frontend never directly accesses the data layer. Every interaction passes through the engine.
 
 ---
 
-## Judging Narrative
+## Team Responsibilities
 
-> "Most industrial safety systems are dashboards with AI features. We built SHELDRA — the first AI safety coach that _walks beside every worker_. It see what they see, knows what they know, adapts to how they learn, and guides them step-by-step through every hazard. Its Decision Tree engine doesn't just follow static checklists — it generates _living flow charts_ that improve with every incident, updating every 5 minutes. This is not a tool. This is a teammate."
+| Person | Role | SHELDRA Modules Owned | Secondary |
+|--------|------|----------------------|-----------|
+| **A** | AI Engineer | LLM Reasoning Core, Vision Intelligence, Monitoring Intelligence, Decision Tree Engine, Personalization Engine | Explainability Engine |
+| **B** | Backend Engineer | Event Orchestrator, Knowledge Graph Manager, RAG Engine, Memory Manager, Safety Guardrails, Infrastructure, Data Layer | Decision Tree Engine |
+| **C** | Frontend Engineer | Dashboard, 3D Avatar, Voice I/O, VR Scene, FastAPI API Layer | Explainability Engine visualization |
+
+---
+
+## Phase 0: Foundation — Rationale
+
+**Why**: Before any intelligence can be built, the communication infrastructure, data persistence, and rendering pipeline must exist. Phase 0 creates the backbone that Phase 1's engine modules will connect to.
+
+### Tasks
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| Monorepo setup (GitHub, branches, CI) | B | 1h | — |
+| Docker Compose for all infra services (Kafka, Neo4j, Qdrant, Redis, InfluxDB, MinIO, PostgreSQL) | B | 2h | — |
+| FastAPI application skeleton with health-check endpoint | B | 1h | — |
+| Next.js scaffold with R3F, Tailwind, shadcn/ui | C | 2h | — |
+| SHELDRA Intelligence Engine base class + module interface | B | 2h | — |
+| Knowledge Graph schema: Worker, Hazard, DecisionTree, Incident, SafetyRule, Procedure, SHELDRASession, Zone, Equipment | B | 2h | — |
+| Synthetic worker profiles (3 types: novice, experienced, expert) | A | 1h | — |
+| Synthetic IoT sensor data generator | A | 1.5h | — |
+| Synthetic camera frame generator (augmented COCO with PPE classes) | A | 2h | — |
+| Safety procedure PDFs (3-5 documents) | B | 1h | — |
+| API contract specification (OpenAPI 3.0) — single endpoint: POST /api/v1/sheldra/chat | B+C | 1.5h | — |
+| WebSocket streaming setup for real-time responses | B | 1h | — |
+
+**Milestone**: `docker-compose up` starts all services. Health-check passes. API accepts requests and forwards to SHELDRA stub.
+
+---
+
+## Phase 1: SHELDRA Intelligence Engine — Rationale
+
+**Why**: The core differentiator is SHELDRA itself — a unified reasoning system. Phase 1 builds the 11 internal modules so that by Day 1 end, SHELDRA can accept a context, reason over it with an LLM, retrieve knowledge, and return a personalized response.
+
+### 1A — Event Orchestrator
+
+**Why**: Every input (API call, sensor reading, vision detection) must enter through a single gateway that routes to the correct module, manages the request lifecycle, and collects traces.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| Implement EventOrchestrator class with module registry | B | 2h | Engine base class |
+| Request lifecycle: validate → route → execute → collect → respond | B | 1.5h | — |
+| Module registry: modules register with capabilities | B | 1h | — |
+| Trace ID propagation across all modules | B | 1h | — |
+| Error handling: module failure → graceful degradation | B | 1h | — |
+
+### 1B — LLM Reasoning Core
+
+**Why**: Central inference. All modules feed context into this core, which generates SHELDRA's responses.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| Llama 3 8B setup via Ollama (local) | A | 2h | — |
+| Prompt template system: system prompt + context injection | A | 1.5h | — |
+| Structured output parsing: { message, tone, gesture, confidence, citations } | A | 1h | — |
+| Streaming response via Server-Sent Events | A+B | 1.5h | WebSocket |
+| Guardrail integration (output validation before returning) | A | 1h | Safety Guardrails stub |
+
+### 1C — Memory Manager
+
+**Why**: SHELDRA must remember what happened in the current session (short-term) and what happened with this worker historically (long-term).
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| Short-term memory: Redis-based conversation context (TTL: session) | B | 1h | Redis |
+| Long-term memory: Knowledge Graph queries for worker interaction history | B | 1.5h | KG schema |
+| Session state management (worker ID, current hazard, active tree) | B | 1h | — |
+| Context window assembly: short + long → LLM prompt context | B | 1h | — |
+
+### 1D — Knowledge Graph Manager
+
+**Why**: All entity relationships (workers, zones, equipment, hazards, incidents) live in one queryable graph.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| Cypher query builder: parameterized, safe | B | 1.5h | Neo4j |
+| Node CRUD: Worker, Hazard, DecisionTree, Incident, SafetyRule, SHELDRASession, Zone, Equipment | B | 2h | KG schema |
+| Edge CRUD: HAS_PROFILE, GUIDED_BY, ABOUT, RESOLVED_VIA, REQUIRES, TRIGGERED_BY, LOCATED_IN | B | 1.5h | — |
+| Temporal query support: "state as of timestamp X" | B | 1.5h | — |
+| Graph query cache (Redis) for frequent access patterns | B | 1h | Redis |
+
+### 1E — Personalization Engine
+
+**Why**: SHELDRA must respond differently to a novice vs. an expert. This module computes adaptation parameters.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| Worker profile loader: query KG → build profile object | A | 1h | KG Manager |
+| Adaptation dimension computation (content depth, speech rate, tone, vocabulary, feedback style) | A | 2h | — |
+| Learning speed inference from interaction patterns | A | 1.5h | Memory Manager |
+| Profile → prompt augmentation (inject profile into LLM context) | A | 1h | LLM Core |
+
+### 1F — RAG Engine
+
+**Why**: SHELDRA's knowledge must be grounded in actual safety documentation.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| PDF chunking pipeline (512 chars, 50 overlap) | B | 1h | — |
+| Embedding service (E5-mistral-7b via ONNX) | B | 2h | — |
+| Qdrant hybrid search (dense + BM25) | B | 1.5h | Qdrant |
+| Context assembly: top-3 chunks → LLM context | B | 1h | LLM Core |
+| Citation tracking: which document, section, page | B | 0.5h | — |
+
+### 1G — Safety Guardrails
+
+**Why**: SHELDRA must never give unsafe advice. This module validates every output before delivery.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| Constraint rules: never contradict procedure, always cite sources, escalate uncertainty | A | 1h | — |
+| Output validation pipeline: structured response → rule check → pass/fail | A | 1h | LLM Core |
+| Confidence threshold enforcement: if < 0.5, trigger escalation | A | 0.5h | — |
+| Audit log writer: every output → immutable log (Kafka + PostgreSQL) | B | 1h | Kafka |
+
+### 1H — Explainability Engine
+
+**Why**: Every SHELDRA decision must be traceable for trust and compliance.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| Trace collector: gather all module decisions during request lifecycle | A | 1.5h | Event Orchestrator |
+| Natural language explanation generator (template-based) | A | 1h | — |
+| Confidence provenance: model + context + history → composite score | A | 1h | — |
+| SHAP integration: vision model feature attribution (cached per class) | A | 2h | Vision Intel |
+
+**Phase 1 Milestone**: `POST /api/v1/sheldra/chat` with `{ worker_id, message, context }` returns `{ response, avatar_command, confidence, trace_id }` in < 3 seconds.
+
+---
+
+## Phase 2: Perception Modules — Rationale
+
+**Why**: SHELDRA needs eyes (Vision) and senses (Monitoring) to perceive the environment. Phase 2 adds these perception modules so SHELDRA can respond to real-world events without waiting for human input.
+
+### 2A — Vision Intelligence
+
+**Why**: Camera feeds are the richest real-time data source. This module processes frames and produces structured observations for the Event Orchestrator.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| YOLOv8n inference server (ONNX Runtime) | A | 2h | — |
+| Frame ingestion from simulated RTSP streams | A | 1.5h | Kafka |
+| PPE detection (6 classes) → structured event | A | 1.5h | — |
+| Zone encroachment (polygon ROI) → structured event | A | 1.5h | — |
+| Pose estimation (RTMPose) → behavior analysis | A | 2h | — |
+| Person tracking (ByteTrack) → persistent worker IDs | A | 1.5h | — |
+| Event producer → Kafka topic `vision.detections` | A | 1h | Kafka |
+
+### 2B — Monitoring Intelligence
+
+**Why**: IoT sensors provide continuous quantitative data. This module detects anomalies and produces hazard triggers for the Decision Tree Engine.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| TimesNet inference server (ONNX Runtime) | A | 2h | — |
+| Sliding window (60s) anomaly scorer | A | 1.5h | — |
+| Multi-sensor correlation (temp + vibration + gas) | A | 2h | — |
+| Anomaly → hazard trigger → Event Orchestrator | A | 1h | Event Orchestrator |
+| Adaptive thresholding (time-of-day baseline) | A | 1.5h | — |
+
+### 2C — Decision Tree Engine
+
+**Why**: Hazard resolution must be dynamic, not static. This module generates, updates, and scores decision trees. It is the learning loop of the platform.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| Tree data model: JSON schema with nodes, branches, conditions, actions, scores | B | 1.5h | — |
+| Tree generator: hazard type → KG query → node graph | B | 2h | KG Manager |
+| 5-minute update cycle daemon (background worker) | B | 2h | — |
+| Branch accuracy scorer: outcome → score → branch update | B | 1.5h | — |
+| Tree versioning + rollback support | B | 1h | — |
+| Decision Tree → API (for frontend flow chart viz) | B | 1h | FastAPI |
+| Integration: Vision/Monitoring events → tree selection → SHELDRA guidance | A+B | 2h | Vision + Monitoring |
+
+**Phase 2 Milestone**: Vision detects missing PPE → Event Orchestrator → SHELDRA generates corrective feedback. Sensor anomaly → Decision Tree loads hazard resolution → SHELDRA guides worker.
+
+---
+
+## Phase 3: Interface & Integration — Rationale
+
+**Why**: The engine is built. Phase 3 connects it to users through the dashboard, avatar, voice, and VR, and adds the supervisor HITL layer.
+
+### 3A — SHELDRA Dashboard
+
+**Why**: The primary interface for supervisors and safety officers to monitor SHELDRA's activity.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| Main layout: SHELDRA panel + context sidebar + DT panel | C | 2h | Phase 1 API |
+| Real-time interaction feed (WebSocket) | C | 1.5h | WebSocket |
+| SHELDRA avatar component (R3F) | C | 3h | R3F scaffold |
+| Conversation panel with streaming text | C | 1h | — |
+| Context panel: current worker, hazard, environment | C | 1h | KG Manager |
+| Decision Tree flow chart (React Flow) | C | 2.5h | Decision Tree API |
+| Worker profile viewer | C | 1.5h | KG Manager |
+| Accuracy dashboard | C | 2h | Decision Tree API |
+| Supervisor console: alert queue, override controls, audit log | C | 2h | — |
+| Dark mode (control room optimized) | C | 0.5h | — |
+
+### 3B — Voice I/O
+
+**Why**: Voice is the most natural interaction mode for workers wearing PPE.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| Speech-to-text (Whisper): browser mic → text | C | 2h | — |
+| Text-to-speech (ElevenLabs/Coqui): SHELDRA response → audio | C | 1.5h | — |
+| Lip-sync animation from audio waveform | A+C | 2h | Avatar |
+| Voice activity indicator | C | 0.5h | — |
+| Caption overlay (noise fallback) | C | 0.5h | — |
+
+### 3C — VR Training Scene
+
+**Why**: SHELDRA should train workers in VR using the same AI that guides them on the floor.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| A-Frame / Three.js XR scene with factory environment | C | 3h | — |
+| SHELDRA avatar in VR | C | 1.5h | Avatar |
+| Hazard simulation: gas leak, fire, equipment failure | C | 2h | — |
+| Worker response scoring | C | 1h | — |
+| Score → profile update | C | 1h | KG Manager |
+
+### 3D — Deployment & Testing
+
+**Why**: The platform must run reliably for judging.
+
+| Task | Owner | Time | Deps |
+|------|-------|------|------|
+| Dockerfiles for all services (multi-stage) | B | 2h | — |
+| docker-compose.prod.yml with resource limits | B | 1h | — |
+| Cloud deployment (AWS ECS or GCP Cloud Run) | B | 2h | — |
+| SSL + domain setup | B | 0.5h | — |
+| Load test: 100 concurrent sessions (k6) | B | 1h | — |
+| Backup demo recording (OBS) | All | 1h | — |
+| Demo script rehearsal (3x) | All | 2h | — |
+
+**Phase 3 Milestone**: Full end-to-end flow: worker speaks → SHELDRA hears → engine reasons → avatar speaks back → Decision Tree updates → supervisor monitors.
+
+---
+
+## Demo Flow (5 Minutes)
+
+| Time | Segment | What Judges See |
+|------|---------|-----------------|
+| 0:00 | SHELDRA intro | Dashboard loads. SHELDRA avatar appears. "Welcome to Shift 3. I'm SHELDRA, your safety coach." |
+| 0:30 | PPE correction | Vision detects missing glasses. SHELDRA: "Worker #3124, your glasses are on your helmet." Decision Tree opens beside avatar. |
+| 1:15 | Personalization switch | Same scenario, 3 profiles. Novice gets step-by-step. Expert gets brief confirmation. "One SHELDRA, adapted to each worker." |
+| 2:00 | Gas leak + tree update | Anomaly detected. SHELDRA switches to emergency mode. Tree loads gas response. After resolution: "Tree updated to v8 — accuracy 94%." |
+| 2:45 | Accuracy dashboard | Show tree accuracy trend, branch effectiveness, update frequency. "This tree learns every 5 minutes." |
+| 3:15 | VR training | SHELDRA in VR. Guides worker through confined space scenario. Score updates profile. |
+| 3:45 | Architecture reveal | One-slide: SHELDRA Intelligence Engine with 11 modules. "Everything you saw is one AI system." |
+| 4:15 | Q&A hook | "We built SHELDRA in 72 hours. The architecture scales to any facility. We'd love to discuss how this redefines industrial safety." |
+
+---
+
+## Risk Register
+
+| Risk | Impact | Likelihood | Mitigation |
+|------|--------|-----------|------------|
+| 3D avatar performance | Demo quality | Medium | 2D fallback with identical behavior |
+| LLM latency > 3s | Demo feel | High | Streaming TTS; pre-generated demo paths; "thinking" animation |
+| Voice I/O fails in noisy hall | Demo segment | Medium | Text chat always visible; captions on all speech |
+| Decision Tree auto-generation incomplete | Technical depth | Medium | 5 pre-built trees; show update cycle on 1 tree; auto-generation as roadmap |
+| Integration gaps between modules | End-to-end fail | Medium | Contract testing; mock interfaces; orchestrated demo script |
+| Cloud dependency fails (no internet) | Demo fail | Low | Local-only docker-compose mode; all services on single laptop |
+
+---
+
+## Deliverables Summary
+
+| Artifact | Format | Content |
+|----------|--------|---------|
+| SHELDRA Intelligence Engine | Python package | 11 modules with defined interfaces |
+| FastAPI Application | Python | Single entry point: /api/v1/sheldra/* |
+| Next.js Dashboard | TypeScript | SHELDRA avatar, conversation, DT viz, supervisor console |
+| Decision Trees | JSON | 5 pre-built trees + update cycle engine |
+| Worker Profiles | Cypher | 3 synthetic profiles in Neo4j |
+| VR Training Scene | A-Frame/Three.js | Factory environment + SHELDRA avatar |
+| Docker Compose | YAML | All services, single command startup |
+| Architecture Document | DOCX | 26-section enterprise architecture proposal |
